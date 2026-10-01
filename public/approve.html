@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Approve transaction · Sentinel</title>
+<meta name="robots" content="noindex" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700;900&family=JetBrains+Mono:wght@400;500;700&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --n950:#0a0a0a; --n700:#404040; --n500:#737373; --n400:#a3a3a3;
+  --ok:#0C9C88; --warn:#C98300; --bad:#E0334F; --accent:#0E2AC5;
+  --orb:radial-gradient(circle at 50% 30%, #5175ff 0%, #0e2ac5 55%, #020b40 100%);
+  --ease:cubic-bezier(0.16,1,0.3,1);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{min-height:100vh;color:#1a1a1a;font-family:"Raleway",system-ui,sans-serif;-webkit-font-smoothing:antialiased;
+  background:radial-gradient(circle at 50% 30%,#ffffff 0%,#eafffb 38%,#b4f5ec 100%) fixed}
+a{color:inherit}
+header{display:flex;justify-content:space-between;align-items:center;padding:28px 24px}
+.wordmark{font-family:"Space Grotesk",sans-serif;font-weight:900;letter-spacing:.25em;font-size:18px;color:var(--n950);text-decoration:none}
+.net{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.2em;text-transform:uppercase;padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.8)}
+main{max-width:640px;margin:0 auto;padding:8px 24px 64px}
+.label{font-family:"JetBrains Mono",monospace;font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:rgba(14,42,197,.8)}
+h1{font-weight:500;font-size:clamp(34px,7vw,52px);line-height:1;letter-spacing:-.03em;margin:18px 0 0;color:var(--n950)}
+.lead{font-weight:500;font-size:17px;line-height:1.5;color:var(--n700);margin:18px 0 0}
+.card{margin-top:28px;border-radius:1.4rem;padding:1px;background:linear-gradient(to bottom,rgba(255,255,255,.85),rgba(255,255,255,.3));box-shadow:0 14px 40px -12px rgba(14,42,197,.18)}
+.card-in{border-radius:1.35rem;background:rgba(255,255,255,.55);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:22px 24px}
+.row{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid rgba(10,10,10,.07);font-size:14px}
+.row:first-child{border-top:0;padding-top:0}
+.row .k{color:var(--n500);font-weight:500}
+.row .v{font-family:"JetBrains Mono",monospace;font-size:12.5px;text-align:right;word-break:break-all}
+.status{display:inline-flex;align-items:center;gap:8px;font-weight:700;font-size:14px}
+.status i{width:9px;height:9px;border-radius:99px;background:currentColor;box-shadow:0 0 10px currentColor}
+.sub{font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--n500);margin:26px 0 10px}
+.reason{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-top:1px solid rgba(10,10,10,.07);font-size:14px;font-weight:500;color:var(--n700);line-height:1.45}
+.reason:first-child{border-top:0}
+.tag{flex:none;font-family:"JetBrains Mono",monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;padding:3px 8px;border-radius:99px;border:1px solid currentColor}
+.tag.freeze,.tag.block{color:var(--bad)}.tag.confirm{color:var(--warn)}.tag.note{color:var(--n500)}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+button{font:inherit;cursor:pointer;border:0;border-radius:99px;font-weight:600;font-size:14px;transition:opacity .3s,transform .3s var(--ease)}
+button:disabled{opacity:.5;cursor:progress}
+.primary{display:inline-flex;align-items:center;gap:12px;padding:6px 6px 6px 22px;background:var(--n950);color:#fff}
+.primary .orb{width:32px;height:32px;border-radius:99px;background:var(--orb);display:flex;align-items:center;justify-content:center}
+.ghost{padding:12px 20px;background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.85);color:var(--n950)}
+.danger{color:var(--bad)}
+.note{font-family:"JetBrains Mono",monospace;font-size:11px;color:var(--n500);margin-top:16px;line-height:1.6;word-break:break-word}
+.note a{color:var(--accent)}
+.hidden{display:none}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+</style>
+</head>
+<body>
+<header>
+  <a class="wordmark" href="/">SENTINEL</a>
+  <span class="net" id="net">mainnet</span>
+</header>
+<main>
+  <div class="label" id="eyebrow">[ Owner approval ]</div>
+  <h1 id="title">Approve a transaction</h1>
+  <p class="lead" id="lead">Sentinel paused this transaction from your agent and did not sign off on it. Review what it does, then approve or reject it with your owner wallet.</p>
+
+  <div class="card"><div class="card-in" id="summary"><div class="note">Loading proposal…</div></div></div>
+
+  <div id="reasonsWrap" class="hidden">
+    <div class="sub">Why Sentinel paused it</div>
+    <div class="card" style="margin-top:0"><div class="card-in" id="reasons"></div></div>
+  </div>
+
+  <div class="actions">
+    <button class="primary" id="connect">Connect wallet<span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></button>
+    <button class="primary hidden" id="approve">Approve &amp; execute<span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span></button>
+    <button class="ghost danger hidden" id="reject">Reject</button>
+    <button class="primary hidden" id="unfreeze">Sign to unfreeze<span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="M7 11V7a5 5 0 0 1 9.9-1"/><rect x="3" y="11" width="18" height="11" rx="2"/></svg></span></button>
+    <button class="primary hidden" id="revoke">Revoke agent<span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span></button>
+  </div>
+  <div class="note" id="msg"></div>
+</main>
+
+<script type="module">
+import { VersionedTransaction } from 'https://cdn.jsdelivr.net/npm/@solana/web3.js@1.98.0/+esm';
+
+const q = new URLSearchParams(location.search);
+const ms = q.get('ms');
+const index = Number(q.get('i'));
+const cluster = q.get('cluster') === 'devnet' ? 'devnet' : 'mainnet';
+const action = ['unfreeze', 'revoke'].includes(q.get('action')) ? q.get('action') : 'approve';
+const agentParam = q.get('agent');
+const $ = (id) => document.getElementById(id);
+const msg = (text, link) => {
+  $('msg').textContent = text;
+  if (link) {
+    const a = document.createElement('a');
+    a.href = link; a.target = '_blank'; a.rel = 'noopener'; a.textContent = ' View on explorer';
+    $('msg').append(a);
+  }
+};
+$('net').textContent = cluster;
+
+const api = async (path, body) => {
+  const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ cluster, ...body }) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+};
+
+const STATUS = { Active: ['Waiting for your approval', 'var(--warn)'], Approved: ['Approved', 'var(--ok)'], Executed: ['Executed', 'var(--ok)'], Rejected: ['Rejected', 'var(--bad)'], Cancelled: ['Cancelled', 'var(--n500)'], Executing: ['Executing', 'var(--ok)'], Stale: ['Stale: wallet members changed', 'var(--n500)'] };
+const short = (a) => (a ? `${a.slice(0, 4)}…${a.slice(-4)}` : '-');
+const fmt = (n) => (Math.abs(n) >= 1 ? n.toFixed(3) : n.toPrecision(3)).replace(/\.?0+$/, '');
+
+// All values come from chain data or the API: rendered with textContent only.
+function row(parent, k, v, color) {
+  const r = document.createElement('div'); r.className = 'row';
+  const a = document.createElement('span'); a.className = 'k'; a.textContent = k;
+  const b = document.createElement('span'); b.className = 'v'; b.textContent = v; if (color) b.style.color = color;
+  r.append(a, b); parent.append(r);
+}
+
+let proposal;
+let wallet;
+const COPY = {
+  unfreeze: ['[ Kill-switch ]', 'Unfreeze your wallet', 'The kill-switch froze this guarded wallet after a suspicious transaction. Sign a short message with your owner wallet to let Sentinel review new transactions again. It is free and sends no transaction.'],
+  revoke: ['[ Kill-switch ]', 'Revoke your agent', 'Remove the agent from this guarded wallet. It will no longer be able to propose any transaction. Your funds stay in the wallet, under your control.'],
+};
+async function loadWallet() {
+  const [eyebrow, title, lead] = COPY[action];
+  $('eyebrow').textContent = eyebrow; $('title').textContent = title; $('lead').textContent = lead; document.title = `${title} · Sentinel`;
+  if (!ms) { $('summary').textContent = 'This link is missing the wallet reference.'; return; }
+  try { wallet = await api('/api/guard/status', { multisig: ms }); } catch (e) { $('summary').textContent = e.message; return; }
+  const s = $('summary'); s.replaceChildren();
+  row(s, 'Guarded wallet', short(wallet.vault));
+  row(s, 'Balance', `${fmt(wallet.vaultSol)} SOL`);
+  row(s, 'Kill-switch', wallet.frozen ? 'frozen' : 'not frozen', wallet.frozen ? 'var(--bad)' : 'var(--ok)');
+  if (wallet.frozen) row(s, 'Reason', wallet.frozen.reason);
+  const agents = wallet.members.filter((m) => m.role === 'agent');
+  row(s, 'Agent', agents.length ? agents.map((m) => short(m.key)).join(', ') : 'none', agents.length ? undefined : 'var(--n500)');
+  if (action === 'unfreeze' && !wallet.frozen) { $('connect').classList.add('hidden'); msg('This wallet is not frozen. Nothing to do.'); }
+  if (action === 'revoke' && !agents.some((m) => !agentParam || m.key === agentParam)) { $('connect').classList.add('hidden'); msg('This agent is no longer part of the wallet.'); }
+}
+async function load() {
+  if (action !== 'approve') return loadWallet();
+  if (!ms || !Number.isInteger(index) || index < 1) { $('summary').textContent = 'This link is missing the proposal reference.'; return; }
+  try {
+    proposal = await api('/api/guard/proposal', { multisig: ms, transactionIndex: index });
+  } catch (e) {
+    $('summary').textContent = e.message; return;
+  }
+  const s = $('summary'); s.replaceChildren();
+  const [label, color] = STATUS[proposal.status] ?? [proposal.status, 'var(--n500)'];
+  const st = document.createElement('div'); st.className = 'row';
+  const k = document.createElement('span'); k.className = 'k'; k.textContent = 'Status';
+  const v = document.createElement('span'); v.className = 'status'; v.style.color = color;
+  const dot = document.createElement('i'); v.append(dot, document.createTextNode(label));
+  st.append(k, v); s.append(st);
+  row(s, 'Proposal', `#${proposal.transactionIndex}`);
+  row(s, 'Guarded wallet', short(proposal.vault));
+  row(s, 'Proposed by', short(proposal.creator));
+  const a = proposal.analysis;
+  if (a) {
+    row(s, 'SOL change', `${a.changes.sol > 0 ? '+' : ''}${fmt(a.changes.sol)} SOL`, a.changes.sol < 0 ? 'var(--bad)' : 'var(--ok)');
+    for (const t of a.changes.tokens) row(s, t.symbol ?? short(t.mint), `${t.amount > 0 ? '+' : ''}${fmt(t.amount)}`);
+    for (const r of a.recipients) row(s, r.isNew ? 'New recipient' : 'Recipient', `${fmt(r.amount)} ${r.asset} → ${short(r.address)}`, r.isNew ? 'var(--warn)' : undefined);
+    row(s, 'Simulation', a.simulation.success ? 'succeeds' : `fails: ${a.simulation.error}`, a.simulation.success ? 'var(--ok)' : 'var(--bad)');
+    const reasons = a.reasons.filter((r) => r.action !== 'note');
+    if (reasons.length) {
+      $('reasonsWrap').classList.remove('hidden');
+      $('reasons').replaceChildren(...reasons.map((r) => {
+        const el = document.createElement('div'); el.className = 'reason';
+        const tag = document.createElement('span'); tag.className = `tag ${r.action}`; tag.textContent = r.action;
+        const txt = document.createElement('span'); txt.textContent = r.message;
+        el.append(tag, txt); return el;
+      }));
+    }
+  }
+  if (proposal.status !== 'Active') { $('connect').classList.add('hidden'); msg(`This proposal is ${proposal.status.toLowerCase()} and can no longer be approved.`); }
+}
+
+const provider = () => window.phantom?.solana ?? window.solflare ?? window.backpack ?? window.solana;
+let owner;
+$('connect').onclick = async () => {
+  const p = provider();
+  if (!p) { msg('No Solana wallet found. Install Phantom, Solflare or Backpack and reload.'); return; }
+  try {
+    const res = await p.connect();
+    owner = (res?.publicKey ?? p.publicKey).toString();
+  } catch { msg('Wallet connection was cancelled.'); return; }
+  $('connect').classList.add('hidden');
+  if (action === 'unfreeze') { $('unfreeze').classList.remove('hidden'); msg(`Connected as ${short(owner)}.`); return; }
+  if (action === 'revoke') { $('revoke').classList.remove('hidden'); msg(`Connected as ${short(owner)}.`); return; }
+  if (!proposal) return;
+  $('approve').classList.remove('hidden'); $('reject').classList.remove('hidden');
+  msg(`Connected as ${short(owner)}. Only an owner of this guarded wallet can approve.`);
+};
+
+async function act(path, verb) {
+  const p = provider();
+  $('approve').disabled = $('reject').disabled = true;
+  try {
+    msg(`Preparing the ${verb} transaction…`);
+    const { transaction, executes } = await api(path, { multisig: ms, transactionIndex: index, owner });
+    const tx = VersionedTransaction.deserialize(Uint8Array.from(atob(transaction), (c) => c.charCodeAt(0)));
+    msg('Confirm in your wallet…');
+    const signed = await p.signTransaction(tx);
+    const raw = btoa(String.fromCharCode(...signed.serialize()));
+    msg('Sending…');
+    const { signature } = await api('/api/guard/send', { transaction: raw });
+    const explorer = `https://explorer.solana.com/tx/${signature}${cluster === 'devnet' ? '?cluster=devnet' : ''}`;
+    msg(verb === 'approve' ? (executes ? 'Approved and executed.' : 'Approved. Your agent can now execute it.') : 'Rejected. This transaction can no longer run.', explorer);
+    $('approve').classList.add('hidden'); $('reject').classList.add('hidden');
+    await load();
+  } catch (e) {
+    msg(e.message || String(e));
+    $('approve').disabled = $('reject').disabled = false;
+  }
+}
+$('approve').onclick = () => act('/api/guard/approve', 'approve');
+
+$('unfreeze').onclick = async () => {
+  const p = provider();
+  $('unfreeze').disabled = true;
+  try {
+    const { message, timestamp } = await api('/api/guard/unfreeze-message', { multisig: ms });
+    msg('Sign the message in your wallet…');
+    const res = await p.signMessage(new TextEncoder().encode(message), 'utf8');
+    const sig = res?.signature ?? res;
+    const hex = Array.from(new Uint8Array(sig), (b) => b.toString(16).padStart(2, '0')).join('');
+    await api('/api/guard/unfreeze', { multisig: ms, owner, timestamp, signature: hex });
+    msg('Unfrozen. Sentinel will review your agent’s transactions again.');
+    $('unfreeze').classList.add('hidden');
+    await loadWallet();
+  } catch (e) {
+    msg(e.message || String(e)); $('unfreeze').disabled = false;
+  }
+};
+
+$('revoke').onclick = async () => {
+  const p = provider();
+  const agent = agentParam ?? wallet?.members.find((m) => m.role === 'agent')?.key;
+  if (!agent) { msg('No agent to revoke.'); return; }
+  $('revoke').disabled = true;
+  try {
+    msg('Preparing the revoke transaction…');
+    const { transaction } = await api('/api/guard/revoke', { multisig: ms, owner, agent });
+    const tx = VersionedTransaction.deserialize(Uint8Array.from(atob(transaction), (c) => c.charCodeAt(0)));
+    msg('Confirm in your wallet…');
+    const signed = await p.signTransaction(tx);
+    const { signature } = await api('/api/guard/send', { transaction: btoa(String.fromCharCode(...signed.serialize())) });
+    msg('Agent revoked. It can no longer move funds from this wallet.', `https://explorer.solana.com/tx/${signature}${cluster === 'devnet' ? '?cluster=devnet' : ''}`);
+    $('revoke').classList.add('hidden');
+    await loadWallet();
+  } catch (e) {
+    msg(e.message || String(e)); $('revoke').disabled = false;
+  }
+};
+$('reject').onclick = () => act('/api/guard/reject', 'reject');
+
+load();
+</script>
+</body>
+</html>
