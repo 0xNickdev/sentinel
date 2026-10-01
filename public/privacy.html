@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#0E2AC5" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@400;500;700&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<title>Privacy policy · Sentinel</title>
+<meta name="description" content="What the hosted Sentinel service stores, why, and for how long." />
+<link rel="canonical" href="https://sentinel-clawpump.vercel.app/privacy" />
+<style>
+:root{
+  --n950:#0a0a0a; --n700:#404040; --n500:#737373; --n400:#a3a3a3; --n200:#e5e7ef; --n100:#f4f6fb;
+  --ok:#0C9C88; --warn:#C98300; --bad:#E0334F; --accent:#0E2AC5;
+  --font-display:"Space Grotesk",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --font-raleway:"Raleway",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;background:#f7f8fd;color:var(--n950);font-family:var(--font-raleway);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--font-mono);font-size:.86em;background:#fff;border:1px solid var(--n200);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}
+
+header{position:sticky;top:0;z-index:20;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+  background:rgba(247,248,253,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--n200)}
+.brand{display:flex;align-items:baseline;gap:12px;color:var(--n950)}
+.brand b{font-family:var(--font-display);font-weight:700;font-size:16px;letter-spacing:.25em}
+.brand span{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.brand:hover{text-decoration:none}
+.top-links{display:flex;gap:20px;font-size:14px;font-weight:500}
+.top-links a{color:var(--n700)}
+
+.layout{max-width:1180px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:1fr;gap:40px}
+nav.toc{display:none}
+@media (min-width:960px){
+  .layout{grid-template-columns:minmax(0,760px);justify-content:center}
+  nav.toc{display:block;position:sticky;top:88px;align-self:start;max-height:calc(100vh - 110px);overflow:auto;padding:28px 0 40px}
+}
+.toc p{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--n400);margin:22px 0 8px}
+.toc p:first-child{margin-top:0}
+.toc a{display:block;font-size:14px;color:var(--n700);padding:4px 0}
+.toc a:hover{color:var(--accent);text-decoration:none}
+
+main{padding:36px 0 96px;min-width:0}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-weight:500;font-size:2.4rem;line-height:1.05;letter-spacing:-.025em;margin:10px 0 14px}
+@media (min-width:768px){h1{font-size:3.2rem}}
+h2{font-weight:600;font-size:1.55rem;letter-spacing:-.015em;margin:64px 0 12px;padding-top:8px;border-top:1px solid var(--n200)}
+h3{font-weight:600;font-size:1.1rem;margin:32px 0 8px}
+p{margin:0 0 14px;color:var(--n700);max-width:72ch}
+.lead{font-size:1.1rem;color:var(--n700)}
+ul{color:var(--n700);padding-left:20px;max-width:72ch}
+li{margin:4px 0}
+
+.ep{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:28px 0 8px}
+.ep h3{margin:0;font-family:var(--font-mono);font-size:1rem;font-weight:700;word-break:break-all}
+.m{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:6px;color:#fff}
+.m.get{background:var(--ok)}.m.post{background:var(--accent)}
+.tag{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--n500);border:1px solid var(--n200);border-radius:99px;padding:2px 8px}
+
+pre{margin:12px 0 18px;background:#0b0d14;color:#d4d4d4;border-radius:14px;padding:18px 20px;overflow-x:auto;font-family:var(--font-mono);font-size:12.5px;line-height:1.7}
+pre .k{color:#9fb4ff}pre .s{color:#5ff5e4}pre .n{color:#E1FC03}pre .c{color:#737373}
+
+.tbl{width:100%;overflow-x:auto;margin:10px 0 20px;background:#fff;border:1px solid var(--n200);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-top:1px solid var(--n200)}
+th{border-top:0;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--n500);font-weight:500;background:var(--n100)}
+td code{white-space:nowrap;overflow-wrap:normal}
+
+.d{font-family:var(--font-mono);font-size:12px;font-weight:700}
+.d.allow{color:var(--ok)}.d.confirm{color:var(--warn)}.d.block{color:var(--bad)}.d.freeze{color:var(--n950)}.d.note{color:var(--n500)}
+.callout{background:#fff;border:1px solid var(--n200);border-left:3px solid var(--accent);border-radius:12px;padding:14px 16px;margin:16px 0;max-width:72ch}
+.callout p{margin:0}
+
+footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--n500)}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="/"><b>SENTINEL</b><span>Privacy</span></a>
+  <div class="top-links">
+    <a href="/">Home</a>
+    <a href="/docs">Docs</a>
+  </div>
+</header>
+
+<div class="layout">
+  <main>
+    <div class="eyebrow">Last updated: October 1, 2026</div>
+    <h1>Privacy policy</h1>
+    <p class="lead">Sentinel works with public blockchain data and keeps very little about the people who use it. This page lists exactly what the hosted service stores and why.</p>
+
+    <h2 id="not-collected">What we do not collect</h2>
+    <ul>
+      <li>No accounts, names, emails or passwords</li>
+      <li>No private keys or seed phrases, ever</li>
+      <li>No cookies, no analytics or tracking scripts, nothing kept in your browser</li>
+    </ul>
+
+    <h2 id="stored">What is stored</h2>
+    <div class="tbl"><table>
+      <tr><th>Data</th><th>Why</th><th>How long</th></tr>
+      <tr><td>Decision log: wallet address, a short summary of the request, the decision and its reasons</td><td>So owners can see why a wallet said no. <b>Public</b> through <code>/api/journal</code>.</td><td>Kept</td></tr>
+      <tr><td>IP address with a request counter</td><td>Rate limiting, 30 requests per minute</td><td>Up to 24 hours</td></tr>
+      <tr><td>Telegram chat id linked to a guarded wallet</td><td>To send approvals, blocks and freeze alerts</td><td>Until you send <code>/stop</code></td></tr>
+      <tr><td>Freeze state of a guarded wallet</td><td>The kill-switch must hold until the owner unfreezes</td><td>Until unfrozen</td></tr>
+      <tr><td>Token scan results</td><td>Cache, so repeated scans are fast</td><td>Reused for 60 seconds</td></tr>
+      <tr><td>Daily call counts per endpoint, without IPs or wallets</td><td>To see load and errors</td><td>Kept</td></tr>
+    </table></div>
+    <p>The hosting provider also keeps short-lived request logs, which include IP addresses, for operating and debugging the service.</p>
+
+    <h2 id="third-parties">Services that receive data</h2>
+    <p>To answer a request Sentinel sends token addresses, wallet addresses and transactions to:</p>
+    <ul>
+      <li>Helius, the Solana RPC provider, for on-chain data and simulations</li>
+      <li>Jupiter, for quotes, swap routes and prices</li>
+      <li>DexScreener, for market data</li>
+      <li>Telegram, for bot messages you opted into</li>
+      <li>The token's own metadata links, for example IPFS gateways</li>
+    </ul>
+    <p>The service runs on Vercel and stores data in a Neon Postgres database. The website loads fonts from Google Fonts, which receives your IP address.</p>
+
+    <h2 id="blockchain">Blockchain data is public</h2>
+    <p>Everything Sentinel analyses is already public on Solana. Transactions you sign and send become public and permanent on-chain, independently of Sentinel.</p>
+
+    <h2 id="choices">Your choices</h2>
+    <ul>
+      <li>Send <code>/stop</code> to the bot to unlink your chat.</li>
+      <li>Run Sentinel yourself from the <a href="https://github.com/0xNickdev/sentinel">open-source code</a> if you do not want to use the hosted service at all.</li>
+      <li>To ask about or remove data tied to your wallet, open an issue on <a href="https://github.com/0xNickdev/sentinel/issues">GitHub</a>.</li>
+    </ul>
+
+    <h2 id="changes">Changes</h2>
+    <p>If what we store changes, this page changes with it, and the date at the top is updated.</p>
+
+  </main>
+</div>
+
+<footer>© 2026 Sentinel · ClawPump ecosystem · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></footer>
+</body>
+</html>

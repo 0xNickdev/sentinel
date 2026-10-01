@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#0E2AC5" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@400;500;700&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<title>Terms of use · Sentinel</title>
+<meta name="description" content="Terms of use for the hosted Sentinel service: the website, API, MCP server and Telegram bot." />
+<link rel="canonical" href="https://sentinel-clawpump.vercel.app/terms" />
+<style>
+:root{
+  --n950:#0a0a0a; --n700:#404040; --n500:#737373; --n400:#a3a3a3; --n200:#e5e7ef; --n100:#f4f6fb;
+  --ok:#0C9C88; --warn:#C98300; --bad:#E0334F; --accent:#0E2AC5;
+  --font-display:"Space Grotesk",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --font-raleway:"Raleway",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;background:#f7f8fd;color:var(--n950);font-family:var(--font-raleway);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--font-mono);font-size:.86em;background:#fff;border:1px solid var(--n200);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}
+
+header{position:sticky;top:0;z-index:20;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+  background:rgba(247,248,253,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--n200)}
+.brand{display:flex;align-items:baseline;gap:12px;color:var(--n950)}
+.brand b{font-family:var(--font-display);font-weight:700;font-size:16px;letter-spacing:.25em}
+.brand span{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.brand:hover{text-decoration:none}
+.top-links{display:flex;gap:20px;font-size:14px;font-weight:500}
+.top-links a{color:var(--n700)}
+
+.layout{max-width:1180px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:1fr;gap:40px}
+nav.toc{display:none}
+@media (min-width:960px){
+  .layout{grid-template-columns:minmax(0,760px);justify-content:center}
+  nav.toc{display:block;position:sticky;top:88px;align-self:start;max-height:calc(100vh - 110px);overflow:auto;padding:28px 0 40px}
+}
+.toc p{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--n400);margin:22px 0 8px}
+.toc p:first-child{margin-top:0}
+.toc a{display:block;font-size:14px;color:var(--n700);padding:4px 0}
+.toc a:hover{color:var(--accent);text-decoration:none}
+
+main{padding:36px 0 96px;min-width:0}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-weight:500;font-size:2.4rem;line-height:1.05;letter-spacing:-.025em;margin:10px 0 14px}
+@media (min-width:768px){h1{font-size:3.2rem}}
+h2{font-weight:600;font-size:1.55rem;letter-spacing:-.015em;margin:64px 0 12px;padding-top:8px;border-top:1px solid var(--n200)}
+h3{font-weight:600;font-size:1.1rem;margin:32px 0 8px}
+p{margin:0 0 14px;color:var(--n700);max-width:72ch}
+.lead{font-size:1.1rem;color:var(--n700)}
+ul{color:var(--n700);padding-left:20px;max-width:72ch}
+li{margin:4px 0}
+
+.ep{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:28px 0 8px}
+.ep h3{margin:0;font-family:var(--font-mono);font-size:1rem;font-weight:700;word-break:break-all}
+.m{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:6px;color:#fff}
+.m.get{background:var(--ok)}.m.post{background:var(--accent)}
+.tag{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--n500);border:1px solid var(--n200);border-radius:99px;padding:2px 8px}
+
+pre{margin:12px 0 18px;background:#0b0d14;color:#d4d4d4;border-radius:14px;padding:18px 20px;overflow-x:auto;font-family:var(--font-mono);font-size:12.5px;line-height:1.7}
+pre .k{color:#9fb4ff}pre .s{color:#5ff5e4}pre .n{color:#E1FC03}pre .c{color:#737373}
+
+.tbl{width:100%;overflow-x:auto;margin:10px 0 20px;background:#fff;border:1px solid var(--n200);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-top:1px solid var(--n200)}
+th{border-top:0;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--n500);font-weight:500;background:var(--n100)}
+td code{white-space:nowrap;overflow-wrap:normal}
+
+.d{font-family:var(--font-mono);font-size:12px;font-weight:700}
+.d.allow{color:var(--ok)}.d.confirm{color:var(--warn)}.d.block{color:var(--bad)}.d.freeze{color:var(--n950)}.d.note{color:var(--n500)}
+.callout{background:#fff;border:1px solid var(--n200);border-left:3px solid var(--accent);border-radius:12px;padding:14px 16px;margin:16px 0;max-width:72ch}
+.callout p{margin:0}
+
+footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--n500)}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="/"><b>SENTINEL</b><span>Terms</span></a>
+  <div class="top-links">
+    <a href="/">Home</a>
+    <a href="/docs">Docs</a>
+  </div>
+</header>
+
+<div class="layout">
+  <main>
+    <div class="eyebrow">Last updated: October 1, 2026</div>
+    <h1>Terms of use</h1>
+    <p class="lead">These terms apply to the hosted Sentinel service: the website, the API at sentinel-clawpump.vercel.app, the MCP server and the Telegram bot. By using them you accept these terms.</p>
+
+    <h2 id="service">The service</h2>
+    <p>Sentinel scores Solana tokens, builds and simulates transactions, applies policies you send with each request and returns a decision. It is free to use. The source code is open under the MIT license on <a href="https://github.com/0xNickdev/sentinel">GitHub</a>; that license governs the code, these terms govern the hosted service.</p>
+
+    <h2 id="advice">Not financial advice</h2>
+    <p>Scores, flags and decisions are automated risk indicators based on public on-chain and market data at the moment of the request. They can be wrong or incomplete. A token that scores well can still lose value or turn out to be a scam, and a decision to allow a transaction is not a recommendation to make it. You decide what to buy, sell or sign.</p>
+
+    <h2 id="keys">Your keys and your transactions</h2>
+    <ul>
+      <li>Sentinel never asks for, receives or stores private keys or seed phrases. It returns unsigned transactions.</li>
+      <li>You and your agent are responsible for what you sign and send. Verify transactions before signing; the official SDK does this locally by default.</li>
+      <li>For guarded wallets, the multisig is created on-chain with you as the owner holding every permission. Sentinel's key can only vote. You can withdraw funds or remove the agent without Sentinel.</li>
+      <li>Blockchain transactions are final. Sentinel cannot reverse, cancel or refund them.</li>
+    </ul>
+
+    <h2 id="availability">Availability</h2>
+    <p>The service is provided "as is" and "as available", without warranties of any kind. It may be slow, rate limited, changed or unavailable at any time, and it depends on third-party providers (Solana RPC, Jupiter, DexScreener, Telegram, hosting). Build your agent so that an error or timeout means "do not sign".</p>
+
+    <h2 id="use">Acceptable use</h2>
+    <p>Do not use the service to break the law, to attack or overload it, to get around rate limits, or to interfere with other users. Requests that do this may be blocked.</p>
+
+    <h2 id="liability">Liability</h2>
+    <p>To the maximum extent permitted by law, the people who run Sentinel are not liable for any loss of funds, profits or data, or for any indirect or consequential damages, arising from the use of the service, its scores and decisions, or its unavailability.</p>
+
+    <h2 id="public">Public decision log</h2>
+    <p>Decisions made through the API are recorded with the wallet address and are readable by anyone through <code>/api/journal</code>. Do not use the hosted service for wallets you need to keep unlinked from this activity. See the <a href="/privacy">privacy policy</a>.</p>
+
+    <h2 id="changes">Changes and contact</h2>
+    <p>These terms can change; the date at the top shows the latest version, and continued use means you accept it. Questions and reports go to <a href="https://github.com/0xNickdev/sentinel/issues">GitHub issues</a>; security issues follow the <a href="https://github.com/0xNickdev/sentinel/blob/main/SECURITY.md">security policy</a>.</p>
+
+  </main>
+</div>
+
+<footer>© 2026 Sentinel · ClawPump ecosystem · <a href="/terms">Terms</a> · <a href="/privacy">Privacy</a></footer>
+</body>
+</html>
