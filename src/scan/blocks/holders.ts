@@ -14,10 +14,12 @@ interface Holder {
 /** Holders: top-10 share, clusters funded from one SOL source. Weight 20. */
 export async function holdersBlock(ctx: ScanContext) {
   const b = new BlockBuilder('holders', 'Holders', 20);
-  const [mint, creator] = await Promise.all([ctx.mintInfo(), ctx.creator()]);
+  const creatorP = ctx.creator().catch(() => null);
+  const [mint, largest] = await Promise.all([
+    ctx.mintInfo(),
+    rpc<{ value: Array<{ address: string; amount: string }> }>('getTokenLargestAccounts', [ctx.mint]),
+  ]);
   const supply = Number(mint.supply);
-
-  const largest = await rpc<{ value: Array<{ address: string; amount: string }> }>('getTokenLargestAccounts', [ctx.mint]);
   const tokenAccounts = largest.value.filter((a) => a.amount !== '0');
 
   const accInfo = await rpc<{ value: any[] }>('getMultipleAccounts', [
@@ -25,6 +27,26 @@ export async function holdersBlock(ctx: ScanContext) {
     { encoding: 'jsonParsed' },
   ]);
   const owners: string[] = accInfo.value.map((v) => v?.data?.parsed?.info?.owner ?? '');
+  const shares = tokenAccounts.map((acc) => pct(Number(acc.amount), supply));
+  const onCurve = owners.map((o) => !!o && PublicKey.isOnCurve(new PublicKey(o).toBytes()));
+
+  // Pools and vaults are off-curve PDAs, so on-curve owners outside the static lists are wallets already.
+  // The funding lookup is the slow part, so it starts now instead of after the owner-program lookup.
+  const walletShares = new Map<string, number>();
+  owners.forEach((o, i) => {
+    if (onCurve[i] && !POOL_AUTHORITIES.has(o) && !BURN_OWNERS.has(o)) walletShares.set(o, (walletShares.get(o) ?? 0) + shares[i]);
+  });
+  const candidates = [...walletShares]
+    .map(([owner, p]) => ({ owner, pct: p }))
+    .sort((x, y) => y.pct - x.pct)
+    .filter((h) => h.pct >= 0.5)
+    .slice(0, FUNDING_CHECK_TOP);
+  // Settled up front: a rejection while the owner lookup is still in flight must not go unhandled.
+  const fundingP = fundingClusters(candidates, creatorP).then(
+    (found) => ({ ok: true as const, found }),
+    () => ({ ok: false as const }),
+  );
+
   const ownerAccs = await rpc<{ value: Array<{ owner: string } | null> }>('getMultipleAccounts', [
     owners,
     { encoding: 'base64', dataSlice: { offset: 0, length: 0 } },
@@ -34,15 +56,15 @@ export async function holdersBlock(ctx: ScanContext) {
   let burnPct = 0;
   const vaults = new Map<string, number>();
   const byOwner = new Map<string, number>();
-  tokenAccounts.forEach((acc, i) => {
+  tokenAccounts.forEach((_, i) => {
     const owner = owners[i];
     if (!owner) return;
-    const share = pct(Number(acc.amount), supply);
+    const share = shares[i];
     const ownerProgram = ownerAccs.value[i]?.owner;
     if (POOL_AUTHORITIES.has(owner) || (ownerProgram && POOL_PROGRAMS.has(ownerProgram))) poolPct += share;
     else if (BURN_OWNERS.has(owner)) burnPct += share;
     // Off-curve owners are PDAs: program vaults (lockers, multisigs, pump.fun Mayhem agent), not people.
-    else if (!PublicKey.isOnCurve(new PublicKey(owner).toBytes())) vaults.set(owner, (vaults.get(owner) ?? 0) + share);
+    else if (!onCurve[i]) vaults.set(owner, (vaults.get(owner) ?? 0) + share);
     else byOwner.set(owner, (byOwner.get(owner) ?? 0) + share);
   });
   const vaultPct = [...vaults.values()].reduce((s, v) => s + v, 0);
@@ -54,9 +76,15 @@ export async function holdersBlock(ctx: ScanContext) {
   let clusterPct = 0;
   let clusters: Array<{ funder: string; wallets: string[]; pct: number }> = [];
   let fundingStatus: 'ok' | 'error' = 'ok';
-  try {
-    ({ clusters, clusterPct } = await fundingClusters(holders.filter((h) => h.pct >= 0.5).slice(0, FUNDING_CHECK_TOP), creator));
-  } catch {
+  const [funding, creator] = await Promise.all([fundingP, creatorP]);
+  if (funding.ok) {
+    // An on-curve account owned by a pool program would be reclassified above; keep clusters to real wallets.
+    clusters = funding.found
+      .map((c) => ({ ...c, wallets: c.wallets.filter((w) => byOwner.has(w)) }))
+      .filter((c) => c.wallets.length >= 2 || (c.wallets.length === 1 && c.funder === creator))
+      .map((c) => ({ ...c, pct: c.wallets.reduce((s, w) => s + (byOwner.get(w) ?? 0), 0) }));
+    clusterPct = clusters.reduce((s, c) => s + c.pct, 0);
+  } else {
     fundingStatus = 'error';
     b.status = 'partial';
   }
@@ -94,7 +122,7 @@ export async function holdersBlock(ctx: ScanContext) {
  * Finds who first sent SOL to each top holder. Wallets whose history exceeds one page
  * are treated as established and skipped; funders with 1000+ txs look like exchanges and are ignored.
  */
-async function fundingClusters(holders: Holder[], creator: string | null) {
+async function fundingClusters(holders: Holder[], creatorP: Promise<string | null>) {
   const firstSigs = await Promise.all(
     holders.map(async (h) => {
       const sigs = await getSignatures(h.owner);
@@ -102,7 +130,10 @@ async function fundingClusters(holders: Holder[], creator: string | null) {
     }),
   );
   const toParse = firstSigs.filter((s): s is string => !!s);
-  const parsed = toParse.length ? await parseTransactions(toParse) : [];
+  const [parsed, creator] = await Promise.all([
+    toParse.length ? parseTransactions(toParse) : Promise.resolve([]),
+    creatorP,
+  ]);
   const bySig = new Map(parsed.map((t) => [t.signature, t]));
 
   const groups = new Map<string, Holder[]>();
@@ -116,15 +147,13 @@ async function fundingClusters(holders: Holder[], creator: string | null) {
     if (!funder) return;
     groups.set(funder, [...(groups.get(funder) ?? []), h]);
   });
-  const clusters: Array<{ funder: string; wallets: string[]; pct: number }> = [];
-  for (const [funder, members] of groups) {
-    // The creator funding even one top holder is already a signal.
-    if (members.length < 2 && funder !== creator) continue;
-    if (funder !== creator) {
-      const funderSigs = await getSignatures(funder);
-      if (funderSigs.length >= 1000) continue; // exchange / hot wallet
-    }
-    clusters.push({ funder, wallets: members.map((m) => m.owner), pct: members.reduce((s, m) => s + m.pct, 0) });
-  }
-  return { clusters, clusterPct: clusters.reduce((s, c) => s + c.pct, 0) };
+  // The creator funding even one top holder is already a signal.
+  const found = [...groups].filter(([funder, members]) => members.length >= 2 || funder === creator);
+  const kept = await Promise.all(
+    found.map(async ([funder, members]) => {
+      if (funder !== creator && (await getSignatures(funder)).length >= 1000) return null; // exchange / hot wallet
+      return { funder, wallets: members.map((m) => m.owner), pct: members.reduce((s, m) => s + m.pct, 0) };
+    }),
+  );
+  return kept.filter((c): c is NonNullable<typeof c> => !!c);
 }
