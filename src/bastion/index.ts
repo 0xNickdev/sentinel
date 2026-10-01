@@ -167,7 +167,8 @@ interface MintMeta {
 }
 
 async function describeMints(mints: string[]): Promise<Map<string, MintMeta>> {
-  const ids = [...new Set(mints)].filter((m) => m !== WSOL);
+  // A temporary WSOL account opened and closed inside the transaction has no readable mint ('').
+  const ids = [...new Set(mints)].filter((m) => m && m !== WSOL);
   const out = new Map<string, MintMeta>();
   if (!ids.length) return out;
   const [accs, assets, prices, solUsd] = await Promise.all([
