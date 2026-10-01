@@ -64,6 +64,12 @@ header{position:fixed;top:0;left:0;right:0;z-index:30;height:80px;padding:0 24px
   pointer-events:none;opacity:0;transform:translateY(-16px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
 body.revealed header{opacity:1;transform:none}
 header > *{pointer-events:auto}
+/* Phones: content scrolls under the wordmark, so soften it behind a fading blur band. */
+@media (max-width:767px){
+  header::before{content:"";position:absolute;inset:0 0 -16px;z-index:-1;pointer-events:none;
+    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+    -webkit-mask-image:linear-gradient(to bottom,#000 55%,transparent);mask-image:linear-gradient(to bottom,#000 55%,transparent)}
+}
 .wordmark{font-family:var(--font-display);font-weight:900;font-size:18px;letter-spacing:.25em;color:var(--n950)}
 .nav{display:none;gap:48px;font-family:var(--font-raleway);font-size:14px;font-weight:500;color:var(--n950)}
 .nav a{transition:opacity .3s}
@@ -194,7 +200,8 @@ body.revealed .hin{opacity:1;transform:none}
   transition:opacity .4s,transform .4s var(--ease)}
 .vrow span:first-child{font-family:var(--font-raleway);font-weight:500;color:var(--n500)}
 .vrow span:last-child{font-family:var(--font-mono);font-size:12.5px;font-weight:500;text-align:right}
-.demo-note{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--n400);margin-top:12px;text-transform:uppercase}
+.demo-note{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--n500);margin-top:12px;text-transform:uppercase;line-height:1.6}
+@media (max-width:767px){.demo-note{display:inline-block;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}}
 .vrows.swap .vrow{opacity:0;transform:translateY(6px)}
 .vrow.flag span:first-child{color:var(--n700);line-height:1.4}
 .vrow.flag span:last-child{flex:none;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding-top:3px}
@@ -252,6 +259,7 @@ body.revealed .hin{opacity:1;transform:none}
 @media (min-width:640px){.h-release{font-size:4.5rem}}
 @media (min-width:768px){#release{padding-top:176px;padding-bottom:176px}.h-release{font-size:88px;line-height:.92}}
 .rel-p{max-width:28rem;margin-left:auto;margin-right:auto}
+@media (max-width:767px){.rel-p{padding:14px 18px;border-radius:1.1rem;background:rgba(255,255,255,.4);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}}
 .rel-cta{margin-top:36px}
 
 /* ---------- FOOTER ---------- */
