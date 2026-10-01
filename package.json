@@ -14,7 +14,8 @@
     "guard:devnet": "tsx scripts/guard-devnet.ts",
     "mcp:check": "tsx scripts/mcp-check.ts",
     "usage": "tsx scripts/usage.ts",
-    "calibrate": "tsx scripts/calibrate.ts"
+    "calibrate": "tsx scripts/calibrate.ts",
+    "bench": "tsx scripts/bench.ts"
   },
   "engines": {
     "node": ">=20"

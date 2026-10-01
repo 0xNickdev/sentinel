@@ -117,6 +117,7 @@ footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font
     <a href="#policy">Policy</a>
     <a href="#reasons">Reason codes</a>
     <a href="#scoring">Scoring rules</a>
+    <a href="#benchmarks">Benchmarks</a>
     <a href="#errors">Errors and limits</a>
     <p>Clients</p>
     <a href="#sdk">TypeScript SDK</a>
@@ -326,6 +327,32 @@ footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font
     </table></div>
     <p>Warning flags: <code>bundle_launch</code>, <code>creator_funded_holders</code>, <code>creator_rugs</code>, <code>dev_dump</code>, <code>fresh_creator</code>, <code>funding_cluster</code>, <code>high_price_impact</code>, <code>high_transfer_fee</code>, <code>impersonation</code>, <code>low_liquidity</code>, <code>metadata_mutable</code>, <code>metadata_unreachable</code>, <code>mint_close_authority</code>, <code>no_liquidity</code>, <code>no_sells</code>, <code>price_crash</code>, <code>price_spike</code>, <code>serial_launcher</code>, <code>snipers_heavy</code>, <code>top10_concentrated</code>, <code>transfer_hook</code>, <code>wash_trading_suspected</code>, <code>whale</code>.</p>
     <p>The full rules are open source in <a href="https://github.com/0xNickdev/sentinel/tree/main/src/scan">src/scan</a>.</p>
+
+    <h2 id="benchmarks">Benchmarks</h2>
+    <p>Measured on October 1, 2026 with rules <code>scan-v1.1</code>. The samples are small and the numbers will move as the rules change. Both scripts are in the repository, so anyone can rerun them.</p>
+
+    <h3>Speed</h3>
+    <p><code>npm run bench</code> scans tokens once each through the hosted API, skipping cached answers, and reads <code>durationMs</code> from the response (server time, without your network).</p>
+    <div class="tbl"><table>
+      <tr><th>Set</th><th>Tokens</th><th>Median</th><th>90% under</th><th>Slowest</th></tr>
+      <tr><td>Established tokens</td><td>14</td><td>1.1 s</td><td>2.1 s</td><td>2.8 s</td></tr>
+      <tr><td>Fresh pump.fun launches</td><td>15</td><td>0.9 s</td><td>2.0 s</td><td>2.6 s</td></tr>
+      <tr><td>All</td><td>29</td><td>1.0 s</td><td>2.1 s</td><td>2.8 s</td></tr>
+    </table></div>
+
+    <h3>Accuracy</h3>
+    <p><code>npm run calibrate</code> scans two labeled sets. Labels come from market outcomes, not from Sentinel.</p>
+    <div class="tbl"><table>
+      <tr><th>Set</th><th>How it is picked</th><th>Result</th></tr>
+      <tr><td>Established tokens</td><td>The most-traded pair of a known ticker with at least 500 trades a day, $200k liquidity and 60 days of history</td><td>0 of 18 blocked: 15 warn, 3 allow</td></tr>
+      <tr><td>Dead tokens</td><td>Recent pump.fun tokens that lost 80% or more and have under $1.5k liquidity, plus four found earlier by hand</td><td>6 of 6 blocked</td></tr>
+    </table></div>
+    <p>What these numbers do and do not show:</p>
+    <ul>
+      <li>Sentinel does not block established tokens, but it is cautious: most well-known memecoins get <code>warn</code> because of whale concentration or mutable metadata. The default <code>min_token_score</code> of 60 lets them through.</li>
+      <li>Dead tokens are scanned after they died, and all of them were caught by <code>no_real_liquidity</code>. This shows an agent will not buy into a token that has already been drained. It does not show how early Sentinel spots a rug before it happens; that needs a forward test and is not measured yet.</li>
+      <li>The established set and the four hand-picked dead tokens were used while tuning <code>scan-v1.1</code>, so they are not an independent test. The other dead tokens are found fresh on every run.</li>
+    </ul>
 
     <h2 id="errors">Errors and limits</h2>
     <p>Errors come back as <code>{ "error": "message" }</code>.</p>
