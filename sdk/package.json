@@ -1,6 +1,6 @@
 {
   "name": "clawpump-sentinel",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Sentinel SDK: a security gateway between your AI agent and its Solana wallet. Token scan, transaction simulation, owner policies, kill-switch.",
   "type": "module",
   "main": "./dist/index.js",

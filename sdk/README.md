@@ -32,6 +32,30 @@ if (res.decision !== 'allow') console.log('Not sent:', res.reasons.map((r) => r.
 | `block` | failed a check, for example a rug token or an over-limit trade |
 | `freeze` | the kill-switch fired, for example a drain attempt |
 
+## Local check before signing
+
+You should not have to trust the Sentinel server with what you sign. Before `executeAndSend` and `guard.run` sign anything, the SDK simulates the transaction on **your own** `connection` and compares the result with your intent:
+
+- SOL leaving the wallet stays within the intent amount plus 0.005 SOL for fees and rent
+- no other token balance drops; on a sell, at most the amount you asked to sell leaves
+- on a buy the token you asked for arrives; on a transfer the recipient you named gets paid
+- no token account gets a delegate or a new owner, and the wallet is not reassigned
+
+If anything is off, it throws `VerificationError` and nothing is signed. On a guarded wallet the same check runs on the vault before the agent signs the execution, and the proposal step may only spend the agent's rent.
+
+You can run it yourself on any transaction:
+
+```ts
+import { verifyTransaction, expectationFor } from 'clawpump-sentinel';
+await verifyTransaction(connection, base64Tx, expectationFor(intent, wallet));
+```
+
+Turning it off (`{ verify: false }`) means trusting the server with what you sign.
+
+## When Sentinel is unreachable
+
+The SDK fails closed. A network error, a timeout (30 s by default, `new Sentinel({ timeoutMs })`) or any non-2xx answer throws `SentinelError`, and nothing is signed. A guarded wallet cannot move funds without Sentinel's vote at all, while the owner keeps every permission and can still move funds or remove the agent. The hosted API allows 30 requests per minute per IP.
+
 ## Guarded wallets (on-chain enforcement)
 
 A guarded wallet is a Squads multisig where the agent can only propose, Sentinel can only approve and the owner keeps full control. The agent cannot move funds without Sentinel's vote, even if it is compromised.

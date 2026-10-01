@@ -1,4 +1,7 @@
 import { VersionedTransaction, type Connection, type Keypair } from '@solana/web3.js';
+import { expectationFor, verifyTransaction } from './verify.js';
+
+export { FEE_ALLOWANCE_LAMPORTS, VerificationError, expectationFor, verifyTransaction, type Expectation } from './verify.js';
 
 /**
  * Sentinel SDK. The agent asks Sentinel instead of signing directly; Sentinel answers with a decision
@@ -105,6 +108,20 @@ export interface SentinelOptions {
   /** Default policy applied when a call does not pass one. */
   policy?: Policy;
   fetch?: typeof fetch;
+  /** Request timeout in ms. A timed-out call throws, so nothing gets signed. Default 30 000. */
+  timeoutMs?: number;
+}
+
+/** Room for the rent of the proposal accounts the agent opens on a guarded wallet. */
+const PROPOSAL_ALLOWANCE_LAMPORTS = 50_000_000n; // 0.05 SOL
+
+export interface SendOptions {
+  policy?: Policy;
+  /**
+   * Simulate the returned transaction on your own connection and compare it with the intent before signing.
+   * On by default; turning it off means trusting the Sentinel server with what you sign.
+   */
+  verify?: boolean;
 }
 
 const toBase64 = (tx: VersionedTransaction | string) => (typeof tx === 'string' ? tx : Buffer.from(tx.serialize()).toString('base64'));
@@ -124,12 +141,14 @@ export class Sentinel {
   private cluster: Cluster;
   private policy?: Policy;
   private fetchImpl: typeof fetch;
+  private timeoutMs: number;
 
   constructor(opts: SentinelOptions = {}) {
     this.baseUrl = (opts.baseUrl ?? 'https://sentinel-clawpump.vercel.app').replace(/\/$/, '');
     this.cluster = opts.cluster ?? 'mainnet';
     this.policy = opts.policy;
     this.fetchImpl = opts.fetch ?? fetch;
+    this.timeoutMs = opts.timeoutMs ?? 30_000;
   }
 
   private async call<T>(method: 'GET' | 'POST', path: string, body?: unknown): Promise<T> {
@@ -137,6 +156,7 @@ export class Sentinel {
       method,
       headers: body ? { 'content-type': 'application/json' } : undefined,
       body: body ? JSON.stringify(body) : undefined,
+      signal: AbortSignal.timeout(this.timeoutMs),
     });
     const data = (await res.json().catch(() => ({}))) as { error?: string };
     if (!res.ok) throw new SentinelError(data.error ?? `HTTP ${res.status}`, res.status);
@@ -172,11 +192,13 @@ export class Sentinel {
   /**
    * One line for the agent: ask Sentinel, and sign + send only when the answer is `allow`.
    * Anything else comes back unsigned with the reasons, so the agent can tell its user why.
+   * Before signing, the transaction is simulated on `connection` and checked against the intent.
    */
-  async executeAndSend(intent: Intent, signer: Keypair, connection: Connection, opts: { policy?: Policy } = {}) {
+  async executeAndSend(intent: Intent, signer: Keypair, connection: Connection, opts: SendOptions = {}) {
     if (signer.publicKey.toBase58() !== intent.wallet) throw new SentinelError('signer does not match intent.wallet', 400);
     const result = await this.execute(intent, opts);
     if (result.decision !== 'allow' || !result.transaction) return { ...result, signature: null as string | null };
+    if (opts.verify !== false) await verifyTransaction(connection, result.transaction, expectationFor(intent, intent.wallet));
     return { ...result, signature: await signAndSend(result.transaction, signer, connection) };
   }
 
@@ -196,14 +218,25 @@ export class Sentinel {
     /**
      * Full guarded round trip with the agent key: propose (carrying Sentinel's vote) and execute.
      * On `confirm` the proposal is still created so the owner can approve it at `approvalUrl`.
+     * Both transactions are checked locally before signing: the proposal may only spend the agent's rent,
+     * and the execution may only move the vault's funds the way the intent says.
      */
-    run: async (p: { multisig: string; intent: GuardIntent; policy?: Policy; cluster?: Cluster }, agent: Keypair, connection: Connection) => {
+    run: async (
+      p: { multisig: string; intent: GuardIntent; policy?: Policy; cluster?: Cluster; verify?: boolean },
+      agent: Keypair,
+      connection: Connection,
+    ) => {
       if (agent.publicKey.toBase58() !== p.intent.agent) throw new SentinelError('agent key does not match intent.agent', 400);
-      const result = await this.guard.execute(p);
+      const { verify = true, ...req } = p;
+      const result = await this.guard.execute(req);
       const signatures: string[] = [];
-      if (result.transaction) signatures.push(await signAndSend(result.transaction, agent, connection));
+      if (result.transaction) {
+        if (verify) await verifyTransaction(connection, result.transaction, { owner: p.intent.agent, maxSolOut: PROPOSAL_ALLOWANCE_LAMPORTS });
+        signatures.push(await signAndSend(result.transaction, agent, connection));
+      }
       if (result.approvedBySentinel && result.transactionIndex) {
         const fin = await this.guard.finalize({ multisig: p.multisig, agent: p.intent.agent, transactionIndex: result.transactionIndex, cluster: p.cluster });
+        if (verify) await verifyTransaction(connection, fin.transaction, expectationFor(p.intent, result.vault));
         signatures.push(await signAndSend(fin.transaction, agent, connection));
       }
       return { ...result, executed: result.approvedBySentinel && signatures.length === 2, signatures };
