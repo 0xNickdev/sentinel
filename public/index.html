@@ -1,0 +1,1533 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sentinel · Security for the agent economy</title>
+<meta name="description" content="Sentinel is one gateway between an AI agent and its wallet. It checks the token, simulates the transaction and applies the owner's policies before anything is signed. Built for the ClawPump ecosystem on Solana." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=Raleway:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+<style>
+:root{
+  --font-sans:"Inter",system-ui,sans-serif;
+  --font-display:"Space Grotesk",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --font-raleway:"Raleway",system-ui,sans-serif;
+  --accent:#0E2AC5;
+  --n950:#0a0a0a; --n700:#404040; --n500:#737373; --n400:#a3a3a3; --n100:#f5f5f5;
+  --ok:#0C9C88; --warn:#C98300; --bad:#E0334F;
+  --ease:cubic-bezier(0.16,1,0.3,1);
+  --orb:radial-gradient(circle at 50% 30%, #5175ff 0%, #0e2ac5 55%, #020b40 100%);
+  --glass-hi:inset 0 1.5px 2px rgba(255,255,255,0.7), 0 8px 30px rgba(0,0,0,0.04);
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;width:100%}
+body{overflow-x:hidden;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;color:#1a1a1a;background:#f7fafc;font-family:var(--font-sans)}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(14,42,197,0.18);border-radius:99px}
+::-webkit-scrollbar-thumb:hover{background:rgba(14,42,197,0.32)}
+
+/* ---------- fixed layers ---------- */
+#bg{position:fixed;inset:0;z-index:-10;transition:background 1.2s cubic-bezier(0.65,0,0.35,1);
+  background:radial-gradient(circle at center,#ffffff 0%,#ecefff 35%,#c2d1ff 100%)}
+#stage{position:fixed;inset:0;z-index:0;pointer-events:none}
+#stage canvas{display:block;width:100%;height:100%;pointer-events:none}
+
+/* ---------- loader ---------- */
+#loader{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 42%,#ffffff 0%,#eef2ff 45%,#dbe4ff 100%);
+  transition:opacity .55s cubic-bezier(0.65,0,0.35,1)}
+#loader.leaving{opacity:0;pointer-events:none}
+.ld-col{display:flex;flex-direction:column;align-items:center;gap:26px}
+.ld-el{opacity:0;transform:translateY(18px);filter:blur(6px);
+  transition:opacity .9s cubic-bezier(0.34,1.25,0.64,1),transform .9s cubic-bezier(0.34,1.25,0.64,1),filter .9s ease}
+#loader.in .ld-el{opacity:1;transform:none;filter:blur(0)}
+#loader.in .ld-el:nth-child(1){transition-delay:.1s}
+#loader.in .ld-el:nth-child(2){transition-delay:.26s}
+#loader.in .ld-el:nth-child(3){transition-delay:.42s}
+.ld-status{font-family:var(--font-mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:#6b7bb5}
+.ld-track{width:clamp(180px,32vw,280px);height:2px;background:rgba(14,42,197,0.14);border-radius:99px;overflow:visible}
+.ld-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#5175ff 0%,#0e2ac5 100%);
+  box-shadow:0 0 14px rgba(47,105,255,0.55);transition:width .45s var(--ease)}
+.ld-count{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:#0e2ac5;font-weight:700;font-variant-numeric:tabular-nums}
+
+/* ---------- header ---------- */
+header{position:fixed;top:0;left:0;right:0;z-index:30;height:80px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;
+  pointer-events:none;opacity:0;transform:translateY(-16px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+body.revealed header{opacity:1;transform:none}
+header > *{pointer-events:auto}
+.wordmark{font-family:var(--font-display);font-weight:900;font-size:18px;letter-spacing:.25em;color:var(--n950)}
+.nav{display:none;gap:48px;font-family:var(--font-raleway);font-size:14px;font-weight:500;color:var(--n950)}
+.nav a{transition:opacity .3s}
+.nav a:hover{opacity:.6}
+.hdr-right{display:flex;align-items:center;gap:10px}
+.icon-btn{width:40px;height:40px;border-radius:999px;display:flex;align-items:center;justify-content:center;
+  border:1px solid rgba(255,255,255,.4);background:rgba(255,255,255,.2);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  box-shadow:var(--glass-hi);transition:background .3s;color:var(--n950)}
+.icon-btn:hover{background:rgba(255,255,255,.3)}
+.pill-cta{display:inline-flex;align-items:center;gap:12px;padding:6px 6px 6px 20px;border-radius:999px;
+  background:rgba(255,255,255,.12);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,.1);border-top-color:rgba(255,255,255,.9);border-bottom-color:rgba(255,255,255,.85);
+  box-shadow:var(--glass-hi);font-family:var(--font-raleway);font-weight:500;font-size:13px;color:var(--n950)}
+.orb{width:32px;height:32px;border-radius:999px;background:var(--orb);display:flex;align-items:center;justify-content:center;color:#fff;transition:transform .4s var(--ease)}
+.pill-cta:hover .orb{transform:scale(1.05)}
+@media (min-width:768px){
+  header{height:96px;padding:0 48px}
+  .wordmark{font-size:20px}
+  .nav{display:flex}
+  .hdr-right{gap:12px}
+  .icon-btn{width:44px;height:44px}
+  .pill-cta{padding-left:24px;font-size:14px}
+}
+
+/* ---------- sections ---------- */
+main{position:relative}
+.sec{position:relative;z-index:10;min-height:100svh;pointer-events:none;padding-left:24px;padding-right:24px}
+.pe{pointer-events:auto}
+@media (min-width:768px){.sec{padding-left:48px;padding-right:48px}}
+
+.label{font-family:var(--font-mono);font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:rgba(14,42,197,.8)}
+.h-display{font-family:var(--font-raleway);font-weight:500;color:var(--n950);letter-spacing:-0.025em;
+  font-size:2.6rem;line-height:1;margin:24px 0 0}
+.body-copy{font-family:var(--font-raleway);font-weight:500;font-size:16px;line-height:1.55;color:var(--n700);margin:32px 0 0}
+@media (min-width:640px){.h-display{font-size:3.75rem}}
+@media (min-width:768px){.h-display{font-size:80px;line-height:.92}.body-copy{font-size:19px}}
+.h-sub{font-family:var(--font-raleway);font-weight:600;font-size:26px;letter-spacing:-0.02em;color:var(--n950);margin:0}
+@media (min-width:768px){.h-sub{font-size:34px}}
+strong.hl{color:var(--ok);font-weight:700}
+.code-chip{font-family:var(--font-mono);font-size:.82em;padding:2px 9px;border-radius:8px;border:1px solid rgba(10,10,10,.14);background:rgba(255,255,255,.45);color:var(--n950);white-space:nowrap}
+
+/* Reveal */
+.rv{opacity:0;transform:translateY(42px);filter:blur(8px);
+  transition:opacity 1.5s var(--ease),transform 1.5s var(--ease),filter 1.5s var(--ease)}
+.rv.on{opacity:1;transform:none;filter:blur(0)}
+
+/* ---------- HERO ---------- */
+#hero{display:flex;align-items:flex-end;padding-bottom:48px}
+.hero-row{width:100%;display:flex;flex-direction:column;justify-content:space-between;gap:32px;opacity:0;transition:opacity .6s ease}
+body.revealed .hero-row{opacity:1}
+.hero-left{display:flex;flex-direction:column;gap:14px;align-items:flex-start}
+.eyebrow{font-family:var(--font-raleway);font-weight:500;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:#0E2AC5;margin-bottom:16px}
+.hero-h{font-family:var(--font-raleway);font-weight:500;font-size:2.6rem;line-height:.95;letter-spacing:-0.05em;color:var(--n950);margin:0}
+.hero-right p{font-family:var(--font-raleway);font-weight:500;font-size:15px;line-height:1.35;margin:0;color:var(--n950)}
+.credit{font-family:var(--font-mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--n500);margin-top:20px}
+.scroll-cue{display:none;align-items:center;gap:8px;margin-top:16px;color:var(--n500);font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;animation:pulse 2s cubic-bezier(.4,0,.6,1) infinite}
+.scroll-cue svg{width:14px;height:14px}
+@keyframes pulse{50%{opacity:.5}}
+.hin{opacity:0;transform:translateY(14px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.hin.y22{transform:translateY(22px);transition-duration:1s}
+body.revealed .hin{opacity:1;transform:none}
+.d15{transition-delay:.15s}.d28{transition-delay:.28s}.d45{transition-delay:.45s}
+@media (min-width:640px){.hero-h{font-size:3.75rem}}
+@media (min-width:768px){
+  #hero{padding-bottom:56px}
+  .hero-row{flex-direction:row;align-items:flex-end}
+  .eyebrow{font-size:14px;margin-bottom:24px}
+  .hero-h{font-size:clamp(56px,6.4vw,90px);line-height:1;white-space:nowrap}
+  .hero-right{width:280px;flex:none}
+  .scroll-cue{display:flex}
+}
+
+/* ---------- glass cards ---------- */
+.gcard{position:relative;border-radius:1.4rem;padding:1px;
+  background:linear-gradient(to bottom,rgba(255,255,255,.8),rgba(255,255,255,.3),rgba(255,255,255,.1));
+  box-shadow:0 14px 40px -12px rgba(14,42,197,.18);transition:transform .5s var(--ease)}
+.gcard:hover{transform:translateY(-2px)}
+.gcard-in{position:relative;border-radius:1.35rem;background:rgba(255,255,255,.25);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);padding:20px 24px;overflow:hidden;height:100%}
+.gcard-in::before{content:"";position:absolute;top:0;left:8%;right:8%;height:1px;background:linear-gradient(to right,transparent,rgba(255,255,255,.9),transparent)}
+@media (max-width:1023px){.gcard-in{background:rgba(255,255,255,.42)}}
+.c-head{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:10px}
+.c-idx{color:var(--n500)}
+.c-key{text-transform:uppercase;letter-spacing:.18em;color:var(--n400);flex:1}
+.c-dot{width:7px;height:7px;border-radius:99px;background:radial-gradient(circle at 35% 30%,#5175ff,#0e2ac5);box-shadow:0 0 8px rgba(47,105,255,.6)}
+.c-dot.rose{background:radial-gradient(circle at 35% 30%,#ff8fa3,#e0334f);box-shadow:0 0 8px rgba(255,77,109,.6)}
+.c-dot.teal{background:radial-gradient(circle at 35% 30%,#7ff7ea,#0c9c88);box-shadow:0 0 8px rgba(53,242,222,.7)}
+.c-val{font-family:var(--font-raleway);font-weight:600;font-size:18px;color:var(--n950);margin-top:12px}
+.c-desc{font-family:var(--font-raleway);font-weight:500;font-size:13px;line-height:1.45;color:var(--n500);margin-top:6px}
+.stack{display:flex;flex-direction:column;gap:14px}
+
+/* ---------- PAIN (02) ---------- */
+#pain{display:flex;align-items:center;padding-top:128px;padding-bottom:160px}
+.grid12{width:100%;display:grid;grid-template-columns:1fr;gap:40px;align-items:start}
+@media (min-width:1024px){
+  #pain{padding-top:160px}
+  .grid12{grid-template-columns:repeat(12,1fr);gap:64px}
+  .col7{grid-column:span 7}
+  .col5{grid-column:span 5;padding-top:12px}
+}
+
+/* ---------- side-split sections (shield held) ---------- */
+.side{padding-top:144px;padding-bottom:144px;display:flex;flex-direction:column}
+.side-col{width:100%;display:flex;flex-direction:column}
+@media (min-width:1024px){
+  .side{padding-top:176px;padding-bottom:176px}
+  .side-col{max-width:min(620px,50%)}
+  .side[data-side="-1"] .side-col{margin-left:auto}
+}
+.side-col > .gap-l{margin-top:48px}
+.sub-label{font-family:var(--font-mono);font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--n500);margin:56px 0 16px;display:flex;align-items:center;gap:10px}
+.sub-label::after{content:"";flex:1;height:1px;background:linear-gradient(to right,rgba(10,10,10,.14),transparent)}
+
+.swipe-pill{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.55);background:rgba(255,255,255,.35);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:var(--n700);font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;margin-top:28px;align-self:flex-start}
+.swipe-pill svg{width:14px;height:14px}
+
+/* demo */
+.scen{display:flex;flex-wrap:wrap;gap:8px;margin-top:40px}
+.scen button{padding:10px 16px;border-radius:999px;border:1px solid rgba(255,255,255,.6);background:rgba(255,255,255,.3);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  font-family:var(--font-raleway);font-weight:600;font-size:13px;color:var(--n700);transition:all .35s var(--ease)}
+.scen button:hover{background:rgba(255,255,255,.5)}
+.scen button.on{background:var(--n950);color:#fff;border-color:var(--n950)}
+.demo{margin-top:14px}
+.demo .gcard-in{padding:24px 26px}
+.verdict{display:flex;align-items:center;gap:12px;font-family:var(--font-raleway);font-weight:600;font-size:34px;letter-spacing:-0.03em;transition:color .4s}
+.verdict .vdot{width:12px;height:12px;border-radius:99px;background:currentColor;box-shadow:0 0 14px currentColor}
+.vrows{margin-top:16px}
+.vrow{display:flex;justify-content:space-between;gap:16px;padding:11px 0;border-top:1px solid rgba(10,10,10,.08);font-size:14px;
+  transition:opacity .4s,transform .4s var(--ease)}
+.vrow span:first-child{font-family:var(--font-raleway);font-weight:500;color:var(--n500)}
+.vrow span:last-child{font-family:var(--font-mono);font-size:12.5px;font-weight:500;text-align:right}
+.demo-note{font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;color:var(--n400);margin-top:12px;text-transform:uppercase}
+.vrows.swap .vrow{opacity:0;transform:translateY(6px)}
+.vrow.flag span:first-child{color:var(--n700);line-height:1.4}
+.vrow.flag span:last-child{flex:none;font-size:10px;letter-spacing:.14em;text-transform:uppercase;padding-top:3px}
+.ca-form{display:flex;gap:8px;margin-top:14px;padding:6px;border-radius:999px;background:rgba(255,255,255,.4);border:1px solid rgba(255,255,255,.7);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+.ca-form input{flex:1;min-width:0;border:0;background:transparent;outline:none;padding:0 14px;font-family:var(--font-mono);font-size:12.5px;color:var(--n950)}
+.ca-form input::placeholder{color:var(--n400)}
+.ca-form button{display:inline-flex;align-items:center;gap:10px;padding:5px 5px 5px 16px;border-radius:999px;background:var(--n950);color:#fff;font-family:var(--font-raleway);font-weight:600;font-size:13px;transition:opacity .3s}
+.ca-form button:disabled{opacity:.55;cursor:progress}
+.ca-form .orb{width:28px;height:28px}
+.demo.loading .gcard-in{animation:pulse 1.2s ease-in-out infinite}
+
+/* flow */
+.flow{display:flex;flex-direction:column;gap:0}
+.flow-step .gcard-in{padding:16px 22px;display:flex;gap:16px;align-items:flex-start}
+.fs-n{font-family:var(--font-mono);font-size:10px;color:var(--accent);padding-top:4px}
+.fs-t{font-family:var(--font-raleway);font-weight:600;font-size:16px;color:var(--n950)}
+.fs-d{font-family:var(--font-raleway);font-weight:500;font-size:13px;color:var(--n500);margin-top:3px;line-height:1.45}
+.fs-d code{font-family:var(--font-mono);font-size:12px;color:var(--n700)}
+.flow-link{height:18px;margin-left:30px;border-left:1px dashed rgba(14,42,197,.35)}
+.outcomes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:0}
+.oc{border-radius:1.1rem;padding:14px 16px;background:rgba(255,255,255,.35);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border:1px solid rgba(255,255,255,.6)}
+.oc b{display:flex;align-items:center;gap:8px;font-family:var(--font-raleway);font-weight:700;font-size:14px}
+.oc b i{width:8px;height:8px;border-radius:99px;background:currentColor;box-shadow:0 0 10px currentColor}
+.oc span{display:block;font-family:var(--font-raleway);font-weight:500;font-size:12.5px;color:var(--n500);margin-top:4px}
+.oc.ok b{color:var(--ok)}.oc.warn b{color:var(--warn)}.oc.bad b{color:var(--bad)}.oc.ks b{color:var(--n950)}
+.flow-note{font-family:var(--font-raleway);font-weight:500;font-size:14px;line-height:1.5;color:var(--n500);margin-top:16px}
+
+/* scan table */
+.scan .gcard-in{padding:8px 24px}
+.srow{display:grid;grid-template-columns:1fr auto;gap:16px;align-items:center;padding:14px 0;border-top:1px solid rgba(10,10,10,.07)}
+.srow:first-child{border-top:0}
+.srow .t{font-family:var(--font-raleway);font-weight:600;font-size:15px;color:var(--n950)}
+.srow .d{font-family:var(--font-raleway);font-weight:500;font-size:13px;color:var(--n500);margin-top:2px}
+.srow .w{display:flex;align-items:center;gap:10px;font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--accent);font-variant-numeric:tabular-nums}
+.bar{width:64px;height:4px;border-radius:99px;background:rgba(14,42,197,.12);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#5175ff,#0e2ac5);width:0;transition:width 1.4s var(--ease) .3s}
+.rv.on .bar i{width:var(--w)}
+.crit{margin-top:14px;display:flex;gap:10px;align-items:flex-start;font-family:var(--font-raleway);font-weight:500;font-size:14px;color:var(--n700);line-height:1.5}
+.crit i{flex:none;width:8px;height:8px;border-radius:99px;margin-top:7px;background:var(--bad);box-shadow:0 0 10px rgba(224,51,79,.6)}
+
+.grid2{display:grid;grid-template-columns:1fr;gap:12px}
+@media (min-width:560px){.grid2{grid-template-columns:1fr 1fr}}
+.code{margin-top:14px;border-radius:1.3rem;background:rgba(10,10,10,.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  padding:22px 24px;font-family:var(--font-mono);font-size:12.5px;line-height:1.75;color:#d4d4d4;overflow-x:auto;
+  box-shadow:0 20px 50px -18px rgba(10,10,10,.5);border:1px solid rgba(255,255,255,.08)}
+.code .k{color:#9fb4ff}.code .s{color:#5ff5e4}.code .n{color:#E1FC03}.code .c{color:#737373}
+.code-head{display:flex;justify-content:space-between;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#737373;margin-bottom:12px}
+
+
+
+/* ---------- RELEASE ---------- */
+#release{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-top:144px;padding-bottom:144px}
+.rel-wrap{max-width:48rem;display:flex;flex-direction:column;align-items:center}
+.h-release{font-family:var(--font-raleway);font-weight:500;color:var(--n950);letter-spacing:-0.025em;font-size:2.8rem;line-height:1;margin:28px 0 0}
+@media (min-width:640px){.h-release{font-size:4.5rem}}
+@media (min-width:768px){#release{padding-top:176px;padding-bottom:176px}.h-release{font-size:88px;line-height:.92}}
+.rel-p{max-width:28rem;margin-left:auto;margin-right:auto}
+.rel-cta{margin-top:36px}
+
+/* ---------- FOOTER ---------- */
+footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-radius:2.5rem 2.5rem 0 0;overflow:hidden}
+@media (min-width:768px){footer{border-radius:4rem 4rem 0 0}}
+.bloom{position:absolute;border-radius:999px;filter:blur(40px);pointer-events:none}
+.bloom.a{width:28rem;height:28rem;top:-10rem;right:-8rem;background:radial-gradient(circle,#2f69ff66 0%,transparent 65%)}
+.bloom.b{width:32rem;height:32rem;bottom:-12rem;left:-10rem;background:radial-gradient(circle,#35f2de33 0%,transparent 65%)}
+.marquee{position:relative;border-bottom:1px solid rgba(255,255,255,.1);padding:20px 0;overflow:hidden}
+.mq-track{display:inline-flex;white-space:nowrap;animation:mq 26s linear infinite;font-family:var(--font-raleway);font-weight:500;font-size:clamp(28px,6vw,64px);color:rgba(255,255,255,.9)}
+.mq-track span{display:inline-flex;align-items:center}
+.mq-track span b{font-weight:500;padding:0 32px}
+.mq-track span i{width:10px;height:10px;border-radius:99px;background:#2f69ff;flex:none}
+.mq-track span:nth-child(4n+2) i{background:#35f2de}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.f-body{position:relative;padding:64px 24px 40px}
+@media (min-width:768px){.f-body{padding:96px 48px 40px}}
+.f-grid{display:grid;grid-template-columns:1fr;gap:48px}
+@media (min-width:1024px){.f-grid{grid-template-columns:repeat(12,1fr)}.f-cta{grid-column:span 5}.f-links{grid-column:span 7}}
+.f-lbl{font-family:var(--font-mono);font-size:11px;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.4)}
+.f-h{font-family:var(--font-raleway);font-weight:500;font-size:2.25rem;line-height:.95;margin:20px 0 0;letter-spacing:-0.02em}
+@media (min-width:768px){.f-h{font-size:3.75rem}}
+.mail{display:inline-flex;align-items:center;gap:20px;margin-top:36px;padding:8px 8px 8px 28px;border-radius:999px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.05);
+  font-family:var(--font-raleway);font-weight:500;font-size:16px;transition:background .3s}
+.mail:hover{background:rgba(255,255,255,.1)}
+.mail .orb{width:40px;height:40px}
+.mail .orb svg{transition:transform .4s var(--ease)}
+.mail:hover .orb svg{transform:rotate(45deg)}
+@media (min-width:768px){.mail{font-size:18px}}
+.f-links{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+@media (min-width:640px){.f-links{grid-template-columns:repeat(3,1fr)}}
+.f-col{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.f-col.on{opacity:1;transform:none}
+.f-col h4{margin:0;font-family:var(--font-mono);font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.4);font-weight:400}
+.f-col ul{list-style:none;margin:20px 0 0;padding:0;display:flex;flex-direction:column;gap:12px}
+.f-col a{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-raleway);font-size:15px;color:rgba(255,255,255,.75);transition:color .3s}
+.f-col a svg{width:12px;height:12px;opacity:0;transform:translate(-4px,4px);transition:all .35s var(--ease)}
+.f-col a:hover{color:#fff}
+.f-col a:hover svg{opacity:1;transform:none}
+.f-bottom{margin-top:80px;padding-top:28px;border-top:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;gap:20px;justify-content:space-between}
+@media (min-width:768px){.f-bottom{margin-top:112px;flex-direction:row;align-items:center}}
+.f-mark{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.f-mark .wm{font-family:var(--font-display);font-weight:900;letter-spacing:.22em}
+.f-mark .dt{width:6px;height:6px;border-radius:99px;background:#2f69ff}
+.f-mark small{font-family:var(--font-mono);font-size:11px;color:rgba(255,255,255,.4)}
+.f-disc{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:rgba(255,255,255,.3);margin-top:10px;width:100%}
+
+/* ---------- drawer ---------- */
+#scrim{position:fixed;inset:0;z-index:40;background:rgba(10,10,10,.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .45s ease}
+#scrim.open{opacity:.4;pointer-events:auto}
+#drawer{position:fixed;top:0;right:0;bottom:0;z-index:50;width:100%;background:rgba(255,255,255,.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-left:1px solid var(--n100);padding:32px;display:flex;flex-direction:column;overflow-y:auto;
+  transform:translateX(100%);transition:transform .6s cubic-bezier(0.32,0.72,0,1)}
+#drawer.open{transform:none}
+@media (min-width:640px){#drawer{width:420px}}
+.dr-head{display:flex;justify-content:space-between;align-items:center}
+.dr-title{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:900;font-size:14px;letter-spacing:.2em;text-transform:uppercase}
+.dr-close{width:36px;height:36px;border-radius:99px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e5e5;transition:background .3s}
+.dr-close:hover{background:var(--n100)}
+.dr-note{font-family:var(--font-mono);font-size:12px;font-style:italic;color:var(--n400);line-height:1.6;margin:24px 0 0}
+.dr-sec{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;font-weight:700;text-transform:uppercase;margin:36px 0 14px}
+.themes{display:flex;flex-direction:column;gap:10px}
+.theme{text-align:left;border-radius:12px;border:1px solid #e5e5e5;padding:16px;transition:all .35s var(--ease)}
+.theme:hover{border-color:#d4d4d4}
+.theme.sel{background:var(--n950);color:#fff;border-color:var(--n950);transform:scale(1.02)}
+.theme .tt{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:12px}
+.theme .sw{width:12px;height:12px;border-radius:99px}
+.theme p{margin:6px 0 0;font-size:10px;line-height:1.5;opacity:.65}
+.dr-foot{margin-top:auto;padding-top:36px}
+.dr-row{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:var(--n400);letter-spacing:.1em;padding:6px 0;border-top:1px solid var(--n100)}
+.dr-reset{margin-top:16px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px;border:1px solid #e5e5e5;font-size:12px;font-weight:600;transition:background .3s}
+.dr-reset:hover{background:var(--n100)}
+
+@media (prefers-reduced-motion:reduce){.mq-track{animation-duration:80s}}
+</style>
+</head>
+<body>
+
+<div id="bg"></div>
+<div id="stage"><canvas></canvas></div>
+
+<!-- ============ LOADER ============ -->
+<div id="loader" aria-live="polite">
+  <div class="ld-col">
+    <div class="ld-el ld-status" id="ldStatus">Calibrating gateway</div>
+    <div class="ld-el ld-track"><div class="ld-fill" id="ldFill"></div></div>
+    <div class="ld-el ld-count" id="ldCount">000%</div>
+  </div>
+</div>
+
+<!-- ============ HEADER ============ -->
+<header>
+  <a href="#hero" class="wordmark" data-nav>SENTINEL</a>
+  <nav class="nav">
+    <a href="#pain" data-nav>Problem</a>
+    <a href="#flow" data-nav>How it works</a>
+    <a href="#modules" data-nav>Scan &amp; Bastion</a>
+    <a href="#api" data-nav>API</a>
+    <a href="#trust" data-nav>Trust</a>
+  </nav>
+  <div class="hdr-right">
+    <button class="icon-btn" id="openDrawer" aria-label="Studio Controls">
+      <svg class="i" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
+    </button>
+    <a href="#api" class="pill-cta" data-nav>Get started
+      <span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+    </a>
+  </div>
+</header>
+
+<main>
+  <!-- ============ 01 · HERO ============ -->
+  <section class="sec" id="hero" data-p="0,0" data-side="0">
+    <div class="hero-row">
+      <div class="hero-left pe">
+        <div class="eyebrow hin d15">[ Security for the agent economy ]</div>
+        <h1 class="hero-h hin y22 d28">Check first. Then sign.</h1>
+      </div>
+      <div class="hero-right pe hin d45">
+        <p>One gateway between an AI agent and its wallet. It checks the token, simulates the transaction and applies the owner's policies before anything gets signed.</p>
+        <div class="credit">© 2026 · ClawPump · Solana</div>
+        <div class="scroll-cue"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="m19 12-7 7-7-7"/></svg>Scroll</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 02 · PAIN (drop) ============ -->
+  <section class="sec" id="pain" data-p="1,1.25" data-side="0">
+    <div class="grid12">
+      <div class="col7 pe">
+        <div class="label rv">[ 02 · Problem ]</div>
+        <h2 class="h-display rv" data-delay=".1">When agents<br>sign blind.</h2>
+        <p class="body-copy rv" data-delay=".2" style="max-width:32rem">Keep scrolling and the spheres fall. Each one is a transaction that nobody checked.</p>
+      </div>
+      <div class="col5 pe rv" data-delay=".25">
+        <div class="stack">
+          <div class="gcard"><div class="gcard-in">
+            <div class="c-head"><span class="c-idx">01</span><span class="c-key">Flow</span><span class="c-dot rose"></span></div>
+            <div class="c-val">Scams at scale</div>
+            <div class="c-desc">Thousands of launches a day. Bundles, snipers and dev dumps are invisible in a DEX interface.</div>
+          </div></div>
+          <div class="gcard"><div class="gcard-in">
+            <div class="c-head"><span class="c-idx">02</span><span class="c-key">Injection</span><span class="c-dot rose"></span></div>
+            <div class="c-val">Prompt injection</div>
+            <div class="c-desc">Agents read tweets and token descriptions. One malicious line can make the key sign away the whole wallet.</div>
+          </div></div>
+          <div class="gcard"><div class="gcard-in">
+            <div class="c-head"><span class="c-idx">03</span><span class="c-key">Coverage</span><span class="c-dot rose"></span></div>
+            <div class="c-val">Piecemeal protection</div>
+            <div class="c-desc">Even with a token check, an agent can still send money to the wrong place. You need one layer that covers the whole path.</div>
+          </div></div>
+          <div class="gcard"><div class="gcard-in">
+            <div class="c-head"><span class="c-idx">04</span><span class="c-key">Signing</span><span class="c-dot rose"></span></div>
+            <div class="c-val">Blind signing</div>
+            <div class="c-desc">Nobody shows the agent or its owner what a transaction will actually do.</div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 03 · IDEA (shield assembles) ============ -->
+  <section class="sec side" id="idea" data-p="2.1,2.2" data-side="1">
+    <div class="side-col pe">
+      <div class="label rv">[ 03 · Idea ]</div>
+      <h2 class="h-display rv" data-delay=".1">Two checks, one gateway.</h2>
+      <p class="body-copy rv" data-delay=".15">Two checks in one gateway. <strong class="hl">Scan</strong> decides whether a token can be trusted. <strong class="hl">Bastion</strong> decides whether a transaction is safe to sign. Together they cover everything from the agent's decision to the money in the wallet.</p>
+      <p class="body-copy rv" data-delay=".2" style="margin-top:18px">The agent calls one function, <span class="code-chip">sentinel.execute(intent)</span>, instead of signing directly. Everything else happens inside the gateway.</p>
+      <div class="swipe-pill rv" data-delay=".28"><svg class="i" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>Move your cursor through the shield</div>
+
+      <div class="rv" data-delay=".1">
+        <div class="scen" id="scen">
+          <button class="on" data-s="0">Swap into a clean token</button>
+          <button data-s="1">Token with active mint</button>
+          <button data-s="2">Injection: transfer to a new address</button>
+        </div>
+        <div class="gcard demo"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">sentinel.execute</span><span class="c-key" style="text-align:right">gateway verdict</span></div>
+          <div class="verdict" id="verdict" style="margin-top:12px"><span class="vdot"></span><span id="verdictText">Allowed</span></div>
+          <div class="vrows" id="vrows"></div>
+        </div></div>
+        <form class="ca-form" id="caForm" autocomplete="off">
+          <input id="caInput" type="text" spellcheck="false" placeholder="Paste a Solana token CA…" aria-label="Token address" />
+          <button type="submit" id="caBtn">Check<span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></button>
+        </form>
+        <div class="demo-note" id="demoNote">The buttons show example scenarios. Paste a CA to run a live check.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 04 · FLOW ============ -->
+  <section class="sec side" id="flow" data-p="2.2,2.25" data-side="-1">
+    <div class="side-col pe">
+      <div class="label rv">[ 04 · Flow ]</div>
+      <h2 class="h-display rv" data-delay=".1">One transaction, four checks.</h2>
+
+      <div class="flow rv" data-delay=".2" style="margin-top:48px">
+        <div class="gcard flow-step"><div class="gcard-in"><span class="fs-n">01</span><div><div class="fs-t">Intent from the agent</div><div class="fs-d">“buy token X for 2 SOL”</div></div></div></div>
+        <div class="flow-link"></div>
+        <div class="gcard flow-step"><div class="gcard-in"><span class="fs-n">02</span><div><div class="fs-t">Scan</div><div class="fs-d">Token score, flags, rules version → below threshold = block</div></div></div></div>
+        <div class="flow-link"></div>
+        <div class="gcard flow-step"><div class="gcard-in"><span class="fs-n">03</span><div><div class="fs-t">Simulation &amp; decoder</div><div class="fs-d"><code>simulateTransaction</code>: what leaves, what arrives, which programs are called</div></div></div></div>
+        <div class="flow-link"></div>
+        <div class="gcard flow-step"><div class="gcard-in"><span class="fs-n">04</span><div><div class="fs-t">Policy engine</div><div class="fs-d">Limits, program allowlist, slippage, new addresses, frequency</div></div></div></div>
+        <div class="flow-link"></div>
+        <div class="outcomes">
+          <div class="oc ok"><b><i></i>Allow</b><span>unsigned tx, ready to sign</span></div>
+          <div class="oc warn"><b><i></i>Confirm</b><span>owner approves first</span></div>
+          <div class="oc bad"><b><i></i>Block</b><span>reason in the response</span></div>
+          <div class="oc ks"><b><i></i>Freeze</b><span>kill-switch on anomaly</span></div>
+        </div>
+        <p class="flow-note">Every decision is logged with its reason and rules version, so the owner can see why the wallet said no.</p>
+      </div>
+
+      <div class="sub-label rv">Who it's for</div>
+      <div class="stack rv" data-delay=".1">
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">A</span><span class="c-key">MCP · REST</span><span class="c-dot"></span></div>
+          <div class="c-val">For agents</div>
+          <div class="c-desc">Connect the MCP server, install <code>clawpump-sentinel</code> from npm, or call <code>POST /api/execute</code>. Every route returns a verdict and an unsigned transaction.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">B</span><span class="c-key">policy.json</span><span class="c-dot"></span></div>
+          <div class="c-val">For owners</div>
+          <div class="c-desc">Your policy travels with every request: limits, program allowlist, slippage, new recipients.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">C</span><span class="c-key">Live check</span><span class="c-dot"></span></div>
+          <div class="c-val">For everyone</div>
+          <div class="c-desc">Paste any token CA on this page for a free live mainnet check.</div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 05 · MODULES ============ -->
+  <section class="sec side" id="modules" data-p="2.25,2.3" data-side="1">
+    <div class="side-col pe">
+      <div class="label rv">[ 05 · Modules ]</div>
+      <h2 class="h-display rv" data-delay=".1">Scan sees the token. Bastion sees the transaction.</h2>
+
+      <div class="sub-label rv">Scan module · score 0–100</div>
+      <p class="body-copy rv" style="margin-top:0">Open rules. Every verdict carries its rules version.</p>
+      <div class="gcard scan rv" data-delay=".1" style="margin-top:20px"><div class="gcard-in">
+        <div class="srow"><div><div class="t">Creator</div><div class="d">past launches, dead-token rate, dev dump, wallet age</div></div><div class="w"><span class="bar"><i style="--w:100%"></i></span>20</div></div>
+        <div class="srow"><div><div class="t">Holders</div><div class="d">top-10 share, clusters funded from one SOL source</div></div><div class="w"><span class="bar"><i style="--w:100%"></i></span>20</div></div>
+        <div class="srow"><div><div class="t">Bundles &amp; snipers</div><div class="d">buys in the first blocks</div></div><div class="w"><span class="bar"><i style="--w:75%"></i></span>15</div></div>
+        <div class="srow"><div><div class="t">Authorities</div><div class="d">mint / freeze authority, mutable metadata</div></div><div class="w"><span class="bar"><i style="--w:75%"></i></span>15</div></div>
+        <div class="srow"><div><div class="t">Liquidity</div><div class="d">depth, LP lock</div></div><div class="w"><span class="bar"><i style="--w:75%"></i></span>15</div></div>
+        <div class="srow"><div><div class="t">Trading anomalies</div><div class="d">sell test (honeypot), wash trading, spikes, crashes</div></div><div class="w"><span class="bar"><i style="--w:50%"></i></span>10</div></div>
+        <div class="srow"><div><div class="t">Metadata</div><div class="d">impersonation, duplicates, broken links</div></div><div class="w"><span class="bar"><i style="--w:25%"></i></span>5</div></div>
+      </div></div>
+      <div class="crit rv"><i></i>Critical flags (active mint, honeypot) block regardless of the amount.</div>
+
+      <div class="sub-label rv">Bastion module</div>
+      <div class="grid2 rv" data-delay=".1">
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">01</span><span class="c-key">Decode</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Simulation</div>
+          <div class="c-desc">Every transaction is decoded into plain terms before signing.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">02</span><span class="c-key">Rules</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Policies</div>
+          <div class="c-desc">Per-trade and daily limits, program allowlist, max slippage, no new recipients without confirmation.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">03</span><span class="c-key">Drainers</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Drainer detection</div>
+          <div class="c-desc">Token approvals to strangers, owner changes and account takeovers are always blocked, no matter the policy.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">04</span><span class="c-key">Freeze</span><span class="c-dot rose"></span></div>
+          <div class="c-val">Kill-switch</div>
+          <div class="c-desc">A spike in size or frequency, or an attempt to drain the balance, returns a freeze verdict before anything is signed.</div>
+        </div></div>
+      </div>
+      <pre class="code rv" data-delay=".15"><div class="code-head"><span>policy.json</span><span>v1</span></div>{
+  <span class="k">"limits"</span>: { <span class="k">"per_tx_sol"</span>: <span class="n">2</span>, <span class="k">"per_day_sol"</span>: <span class="n">10</span> },
+  <span class="k">"programs"</span>: [<span class="s">"pump.fun"</span>, <span class="s">"jupiter"</span>],
+  <span class="k">"min_token_score"</span>: <span class="n">60</span>,
+  <span class="k">"max_slippage_bps"</span>: <span class="n">300</span>,
+  <span class="k">"new_recipient"</span>: <span class="s">"confirm"</span>,
+  <span class="k">"mode"</span>: <span class="s">"enforce"</span>   <span class="c">// "warn" reports but never blocks</span>
+}</pre>
+    </div>
+  </section>
+
+  <!-- ============ 06 · API ============ -->
+  <section class="sec side" id="api" data-p="2.3,2.35" data-side="-1">
+    <div class="side-col pe">
+      <div class="label rv">[ 06 · API ]</div>
+      <h2 class="h-display rv" data-delay=".1">Plug it in with one API call.</h2>
+      <p class="body-copy rv" data-delay=".15">Swap your agent's direct signing for one request. Sentinel builds the transaction, checks it and returns either a transaction that is safe to sign or the reason it isn't.</p>
+
+      <pre class="code rv" data-delay=".1" style="margin-top:36px"><div class="code-head"><span>request</span><span>POST /api/execute</span></div>curl -X POST https://sentinel-clawpump.vercel.app/api/execute \
+  -H <span class="s">'content-type: application/json'</span> \
+  -d <span class="s">'{
+  "intent": { "type": "buy", "wallet": "&lt;agent wallet&gt;",
+              "mint": "&lt;token CA&gt;", "sol": 0.5 },
+  "policy": { "limits": { "per_tx_sol": 2 } }
+}'</span></pre>
+      <pre class="code rv" data-delay=".15"><div class="code-head"><span>response</span><span>200</span></div>{
+  <span class="k">"decision"</span>: <span class="s">"allow"</span>,        <span class="c">// allow · confirm · block · freeze</span>
+  <span class="k">"transaction"</span>: <span class="s">"AQAAAA…"</span>,   <span class="c">// unsigned, base64</span>
+  <span class="k">"reasons"</span>: [],
+  <span class="k">"scan"</span>: { <span class="k">"score"</span>: <span class="n">84</span>, <span class="k">"verdict"</span>: <span class="s">"allow"</span> },
+  <span class="k">"bastion"</span>: { <span class="k">"changes"</span>: { <span class="k">"sol"</span>: <span class="n">-0.5</span> }, <span class="k">"slippageBps"</span>: <span class="n">0</span> }
+}</pre>
+
+      <div class="sub-label rv">Connect over MCP</div>
+      <div class="gcard rv" data-delay=".1"><div class="gcard-in">
+        <div class="c-head"><span class="c-idx">MCP</span><span class="c-key">Streamable HTTP</span><span class="c-dot teal"></span></div>
+        <div class="c-val" style="font-family:var(--font-mono);font-size:15px;word-break:break-all">https://sentinel-clawpump.vercel.app/api/mcp</div>
+        <div class="c-desc">Add it as a custom connector. Your agent gets eight tools: <code>scan_token</code>, <code>execute_intent</code>, <code>check_transaction</code>, <code>guard_setup</code>, <code>guard_execute</code>, <code>guard_finalize</code>, <code>guard_status</code> and <code>decision_log</code>.</div>
+      </div></div>
+
+      <div class="sub-label rv">Or use the SDK</div>
+      <pre class="code rv" data-delay=".1"><div class="code-head"><span>npm i clawpump-sentinel</span><span>TypeScript</span></div><span class="k">import</span> { Sentinel } <span class="k">from</span> <span class="s">'clawpump-sentinel'</span>;
+
+<span class="k">const</span> sentinel = <span class="k">new</span> Sentinel();
+<span class="k">const</span> res = <span class="k">await</span> sentinel.executeAndSend(
+  { type: <span class="s">'buy'</span>, wallet, mint, sol: <span class="n">0.5</span> },
+  agentKeypair, connection,
+);
+<span class="c">// signs and sends only when res.decision is "allow"</span></pre>
+
+      <div class="sub-label rv">Endpoints</div>
+      <div class="grid2 rv" data-delay=".1">
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">POST</span><span class="c-key">/api/execute</span><span class="c-dot"></span></div>
+          <div class="c-val">Execute an intent</div>
+          <div class="c-desc">buy · sell · swap · transfer. Scan, build, simulate, apply policy.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">POST</span><span class="c-key">/api/bastion/check</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Check your own tx</div>
+          <div class="c-desc">Already building transactions? Send one and get Bastion's verdict before signing.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">GET</span><span class="c-key">/api/scan/:mint</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Score a token</div>
+          <div class="c-desc">0–100 score, flags and a per-block breakdown for any Solana token.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">GET</span><span class="c-key">/api/journal</span><span class="c-dot"></span></div>
+          <div class="c-val">Decision log</div>
+          <div class="c-desc">Every verdict with its reasons and rules version, filterable by wallet.</div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 · TRUST ============ -->
+  <section class="sec side" id="trust" data-p="2.35,2.5" data-side="1">
+    <div class="side-col pe">
+      <div class="label rv">[ 07 · Trust ]</div>
+      <h2 class="h-display rv" data-delay=".1">What keeps your wallet safe.</h2>
+
+      <div class="stack rv" data-delay=".15" style="margin-top:48px">
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">01</span><span class="c-key">Non-custodial</span><span class="c-dot teal"></span></div>
+          <div class="c-val">No access to your keys</div>
+          <div class="c-desc">Sentinel never sees a private key. It returns unsigned transactions, and your agent signs only the ones that passed.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">02</span><span class="c-key">Explainable</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Every verdict is explained</div>
+          <div class="c-desc">Each verdict lists its reasons and the rules version behind it, and is saved to the decision log.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">03</span><span class="c-key">Warn mode</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Start in warn mode</div>
+          <div class="c-desc">Set <code>"mode": "warn"</code> to see every verdict without blocking anything. Switch to enforce when you're ready.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">04</span><span class="c-key">Real data</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Live mainnet data</div>
+          <div class="c-desc">Scores and simulations use live Solana data at the moment of the request.</div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 08 · RELEASE ============ -->
+  <section class="sec" id="release" data-p="3,3" data-side="0">
+    <div class="rel-wrap pe">
+      <div class="label rv">[ 08 · Signed ]</div>
+      <h2 class="h-release rv" data-delay=".12">Checked.<br>Signed.</h2>
+      <p class="body-copy rel-p rv" data-delay=".24">The transaction goes on-chain only after Scan, the simulation and the owner's policies have all passed.</p>
+      <a href="#api" class="pill-cta rel-cta rv" data-delay=".32" data-nav>Connect your agent
+        <span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+      </a>
+    </div>
+  </section>
+</main>
+
+<!-- ============ FOOTER ============ -->
+<footer id="access">
+  <div class="bloom a"></div><div class="bloom b"></div>
+  <div class="marquee"><div class="mq-track" id="mq"></div></div>
+  <div class="f-body">
+    <div class="f-grid">
+      <div class="f-cta rv">
+        <div class="f-lbl">[ Get started ]</div>
+        <h3 class="f-h">Got an agent<br>with a wallet?</h3>
+        <a class="mail" href="#api" data-nav>POST /api/execute
+          <span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></span>
+        </a>
+      </div>
+      <div class="f-links" id="fLinks">
+        <div class="f-col"><h4>Product</h4><ul>
+          <li><a href="#idea" data-nav>Live check<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="#modules" data-nav>Scan<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="#modules" data-nav>Bastion<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="#api" data-nav>API<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+        </ul></div>
+        <div class="f-col"><h4>Ecosystem</h4><ul>
+          <li><a href="https://clawpump.tech" target="_blank" rel="noopener">ClawPump<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="https://solana.com" target="_blank" rel="noopener">Solana<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="https://jup.ag" target="_blank" rel="noopener">Jupiter<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+        </ul></div>
+        <div class="f-col"><h4>Resources</h4><ul>
+          <li><a href="#flow" data-nav>How it works<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="#modules" data-nav>Scoring rules<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="#trust" data-nav>Trust<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+        </ul></div>
+      </div>
+    </div>
+    <div class="f-bottom">
+      <div>
+        <div class="f-mark"><span class="wm">SENTINEL</span><span class="dt"></span><small>© 2026 Sentinel · ClawPump ecosystem</small></div>
+        <div class="f-disc">Scores and decisions are risk indicators, not financial advice.</div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ============ STUDIO CONTROLS ============ -->
+<div id="scrim"></div>
+<aside id="drawer" aria-label="Studio Controls">
+  <div class="dr-head">
+    <div class="dr-title"><svg class="i" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>Scene settings</div>
+    <button class="dr-close" id="closeDrawer" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </div>
+  <p class="dr-note">Set the hero sphere palette. As you scroll, the scene turns rose when the field collapses and teal when the shield assembles.</p>
+  <div class="dr-sec"><svg class="i" viewBox="0 0 24 24" style="width:12px;height:12px"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>Sphere palette</div>
+  <div class="themes" id="themes"></div>
+  <div class="dr-foot">
+    <div class="dr-row"><span>RENDER ENGINE</span><span>THREE.JS WEBGL</span></div>
+    <div class="dr-row"><span>DYNAMICS SOLVER</span><span>3D COLLISION VERLET</span></div>
+    <button class="dr-reset" id="resetTheme"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Reset defaults</button>
+  </div>
+</aside>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* =========================================================
+   Shared state
+   ========================================================= */
+const control = { progress: 0, side: 0, started: false };
+const mousePos = { x: 99, y: 99, isDown: false };
+
+window.addEventListener('pointermove', e => {
+  mousePos.x = (e.clientX / window.innerWidth) * 2 - 1;
+  mousePos.y = -(e.clientY / window.innerHeight) * 2 + 1;
+});
+window.addEventListener('mousedown', () => mousePos.isDown = true);
+window.addEventListener('mouseup',   () => mousePos.isDown = false);
+document.addEventListener('mouseleave', () => { mousePos.x = 99; mousePos.y = 99; });
+
+/* =========================================================
+   Themes
+   ========================================================= */
+const THEMES = [
+  { id:'roseGold',   name:'Royal Blue & Pearl',   desc:'Cobalt spheres on a white-slate background.', primary:'#2F69FF', ball:'#2F69FF',
+    bg:'radial-gradient(circle at center, #ffffff 0%, #ecefff 35%, #c2d1ff 100%)' },
+  { id:'pinkBlush',  name:'Rose Blush & Crème',   desc:'Soft pink spheres on a pearl background.', primary:'#FFA6B3', ball:'#FFC5C2',
+    bg:'radial-gradient(circle at center, #ffffff 0%, #fff0f1 38%, #ffd1d5 100%)' },
+  { id:'voltLime',   name:'Volt Lime & Slate',    desc:'Neon lime spheres on a white-slate background.', primary:'#E1FC03', ball:'#E1FC03',
+    bg:'radial-gradient(circle at center, #ffffff 0%, #fbffe5 38%, #e8ff9c 100%)' },
+  { id:'arcticBlue', name:'Arctic Sky & Crystal', desc:'Light blue glass spheres.', primary:'#96E5FF', ball:'#96E5FF',
+    bg:'radial-gradient(circle at center, #ffffff 0%, #f0f9ff 38%, #c9f1ff 100%)' },
+];
+const STAGE_BG = [
+  null,
+  'radial-gradient(circle at center, #ffffff 0%, #fff0f1 38%, #ffd1d5 100%)', // pain: rose
+  'radial-gradient(circle at center, #ffffff 0%, #eafffb 38%, #b4f5ec 100%)', // shield: teal
+];
+let theme = THEMES[0];
+let bgStage = 0;
+const bgEl = document.getElementById('bg');
+const applyBg = () => { bgEl.style.background = bgStage === 0 ? theme.bg : STAGE_BG[bgStage]; };
+
+/* =========================================================
+   Smooth scroll (Lenis-style)
+   ========================================================= */
+const drawer = document.getElementById('drawer');
+const smooth = (() => {
+  const LERP = 0.09, WHEEL = 1;
+  let target = window.scrollY, current = window.scrollY, animating = false;
+  const maxScroll = () => document.documentElement.scrollHeight - window.innerHeight;
+  const clampT = v => Math.max(0, Math.min(maxScroll(), v));
+  const step = () => {
+    current += (target - current) * LERP;
+    if (Math.abs(target - current) < 0.5) { current = target; animating = false; }
+    window.scrollTo(0, current);
+    if (animating) requestAnimationFrame(step);
+  };
+  const start = () => { if (!animating) { animating = true; current = window.scrollY; requestAnimationFrame(step); } };
+  window.addEventListener('wheel', e => {
+    if (e.ctrlKey || drawer.contains(e.target)) return;
+    e.preventDefault();
+    const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
+    target = clampT(target + e.deltaY * unit * WHEEL);
+    start();
+  }, { passive: false });
+  window.addEventListener('scroll', () => { if (!animating) { target = current = window.scrollY; } }, { passive: true });
+  return { to(y) { target = clampT(y); start(); } };
+})();
+
+document.querySelectorAll('[data-nav]').forEach(a => {
+  a.addEventListener('click', e => {
+    const id = a.getAttribute('href');
+    if (!id || !id.startsWith('#') || id.length < 2) return;
+    const el = document.querySelector(id);
+    if (!el) return;
+    e.preventDefault();
+    smooth.to(el.getBoundingClientRect().top + window.scrollY);
+  });
+});
+
+/* =========================================================
+   Scroll → physics progress
+   Each section carries data-p="pIn,pOut": progress is pinned to pIn when the
+   section's top hits the viewport top and eases to pOut across its extra height,
+   so long sections can hold a scene state (e.g. the shield) while you read.
+   ========================================================= */
+const sections = [...document.querySelectorAll('main > .sec')];
+let anchors = [];
+const computeAnchors = () => {
+  const vh = window.innerHeight || 1;
+  anchors = [];
+  for (const sec of sections) {
+    const top = sec.getBoundingClientRect().top + window.scrollY;
+    const h = sec.offsetHeight;
+    const [pin, pout] = sec.dataset.p.split(',').map(Number);
+    const side = Number(sec.dataset.side || 0);
+    anchors.push({ y: top, p: pin, s: side });
+    if (h - vh > 1) anchors.push({ y: top + h - vh, p: pout, s: side });
+  }
+  const max = document.documentElement.scrollHeight - vh;
+  const last = anchors[anchors.length - 1];
+  if (max > last.y + 1) anchors.push({ y: max, p: 4, s: 0 });
+};
+const sampleAnchors = (y) => {
+  if (!anchors.length) return { p: 0, s: 0 };
+  if (y <= anchors[0].y) return anchors[0];
+  for (let i = 1; i < anchors.length; i++) {
+    const a = anchors[i - 1], b = anchors[i];
+    if (y <= b.y) {
+      const t = (y - a.y) / Math.max(1, b.y - a.y);
+      return { p: a.p + (b.p - a.p) * t, s: a.s + (b.s - a.s) * t };
+    }
+  }
+  return anchors[anchors.length - 1];
+};
+let scrollQueued = false;
+const onScroll = () => {
+  if (scrollQueued) return;
+  scrollQueued = true;
+  requestAnimationFrame(() => {
+    scrollQueued = false;
+    const { p, s } = sampleAnchors(window.scrollY);
+    control.progress = p;
+    control.side = s;
+    const stage = p > 1.55 ? 2 : p > 0.7 ? 1 : 0;
+    if (stage !== bgStage) { bgStage = stage; applyBg(); }
+  });
+};
+window.addEventListener('scroll', onScroll, { passive: true });
+window.addEventListener('resize', () => { computeAnchors(); onScroll(); });
+new ResizeObserver(() => { computeAnchors(); onScroll(); }).observe(document.body);
+document.fonts?.ready.then(() => { computeAnchors(); onScroll(); });
+computeAnchors(); onScroll();
+
+/* =========================================================
+   Reveal (IntersectionObserver, once)
+   ========================================================= */
+const revealIO = new IntersectionObserver(entries => {
+  for (const en of entries) {
+    if (!en.isIntersecting) continue;
+    const big = en.intersectionRect.height >= window.innerHeight * 0.35;
+    if (en.intersectionRatio >= 0.45 || big) {
+      const el = en.target;
+      el.style.transitionDelay = (el.dataset.delay || 0) + 's';
+      el.classList.add('on');
+      revealIO.unobserve(el);
+    }
+  }
+}, { threshold: Array.from({ length: 21 }, (_, i) => i / 20) });
+document.querySelectorAll('.rv').forEach(el => revealIO.observe(el));
+
+const fIO = new IntersectionObserver(entries => {
+  if (entries.some(e => e.isIntersecting)) {
+    document.querySelectorAll('.f-col').forEach((c, i) => { c.style.transitionDelay = (i * 0.08) + 's'; c.classList.add('on'); });
+    fIO.disconnect();
+  }
+}, { threshold: 0.3 });
+fIO.observe(document.getElementById('fLinks'));
+
+/* marquee */
+(() => {
+  const words = ['Check before you sign', 'Scan + Bastion', 'One gateway', 'Build on ClawPump'];
+  const one = words.map(w => `<span><b>${w}</b><i></i></span>`).join('');
+  document.getElementById('mq').innerHTML = one + one;
+})();
+
+/* =========================================================
+   Demo verdict card
+   ========================================================= */
+const SCEN = [
+  { v:'Allowed', color:'var(--ok)', rows:[
+      ['Scan: token score', '88 / 100'], ['Simulation', '−2 SOL, +token'],
+      ['Per-trade limit', 'within limit'], ['Transaction', 'returned unsigned'] ] },
+  { v:'Blocked', color:'var(--bad)', rows:[
+      ['Scan: token score', '23 / 100'], ['Critical flag', 'active mint'],
+      ['Simulation', 'not run'], ['Reason', 'rules v1 · mint_authority'] ] },
+  { v:'Frozen', color:'var(--warn)', rows:[
+      ['Simulation', '−48 SOL → new address'], ['Per-trade limit', '48 > 2 SOL'],
+      ['Recipient', 'never paid before'], ['Kill-switch', 'wallet drain detected'] ] },
+];
+const vrows = document.getElementById('vrows');
+const verdict = document.getElementById('verdict');
+const verdictText = document.getElementById('verdictText');
+const demoNote = document.getElementById('demoNote');
+
+// rows: [label, value, isFlag?]: built with textContent: scan data (token names, metadata) is untrusted.
+const paintVerdict = (label, color, rows, animate) => {
+  const paint = () => {
+    verdict.style.color = color;
+    verdictText.textContent = label;
+    vrows.replaceChildren(...rows.map(([k, v, isFlag]) => {
+      const row = document.createElement('div');
+      row.className = 'vrow' + (isFlag ? ' flag' : '');
+      const a = document.createElement('span'); a.textContent = k;
+      const b = document.createElement('span'); b.textContent = v; b.style.color = color;
+      row.append(a, b);
+      return row;
+    }));
+  };
+  if (!animate) return paint();
+  vrows.classList.add('swap');
+  setTimeout(() => { paint(); requestAnimationFrame(() => vrows.classList.remove('swap')); }, 220);
+};
+const renderScen = (i, animate) => { const s = SCEN[i]; paintVerdict(s.v, s.color, s.rows, animate); };
+document.querySelectorAll('#scen button').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('#scen button').forEach(b => b.classList.toggle('on', b === btn));
+  renderScen(+btn.dataset.s, true);
+}));
+renderScen(0, false);
+
+/* Live Scan: same origin when served by the Sentinel service, local service when opened as a file. */
+const API_BASE = location.protocol.startsWith('http') ? '' : 'http://127.0.0.1:8787';
+const VERDICTS = {
+  allow: ['Allowed', 'var(--ok)'],
+  warn: ['Caution', 'var(--warn)'],
+  block: ['Blocked', 'var(--bad)'],
+};
+const SEVERITY = { critical: 'critical', warn: 'risk', info: 'info' };
+const caForm = document.getElementById('caForm');
+const caInput = document.getElementById('caInput');
+const caBtn = document.getElementById('caBtn');
+const demoCard = document.querySelector('.demo');
+caForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const mint = caInput.value.trim();
+  if (!mint) return caInput.focus();
+  document.querySelectorAll('#scen button').forEach(b => b.classList.remove('on'));
+  caBtn.disabled = true; demoCard.classList.add('loading');
+  demoNote.textContent = 'Checking the token on mainnet…';
+  try {
+    const res = await fetch(`${API_BASE}/api/scan/${encodeURIComponent(mint)}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    const [label, color] = VERDICTS[data.verdict];
+    const order = ['critical', 'warn', 'info'];
+    const ranked = [...data.flags].sort((a, b) => order.indexOf(a.severity) - order.indexOf(b.severity));
+    const rows = [
+      ['Token', `${data.name ?? 'Unknown'}${data.symbol ? ` · ${data.symbol}` : ''}`],
+      ['Scan: token score', `${data.score} / 100`],
+      ...ranked.slice(0, 4).map(f => [f.message, SEVERITY[f.severity], true]),
+    ];
+    if (!ranked.length) rows.push(['Flags', 'none found']);
+    paintVerdict(label, color, rows, true);
+    demoNote.textContent = `Live mainnet data · ${data.rulesVersion} · ${data.durationMs} ms${data.cached ? ' (cached)' : ''} · ${data.disclaimer}`;
+  } catch (err) {
+    const offline = err instanceof TypeError; // fetch() rejects with TypeError only on network failure
+    paintVerdict(offline ? 'Offline' : 'Error', 'var(--n500)', [['Reason', offline ? 'the Sentinel service is not running' : err.message]], true);
+    demoNote.textContent = offline ? 'Start the service: cd sentinel && npm start' : 'Check the token address and try again.';
+  } finally {
+    caBtn.disabled = false; demoCard.classList.remove('loading');
+  }
+});
+
+/* =========================================================
+   Studio Controls drawer
+   ========================================================= */
+const scrim = document.getElementById('scrim');
+const openDrawer = () => { drawer.classList.add('open'); scrim.classList.add('open'); };
+const closeDrawer = () => { drawer.classList.remove('open'); scrim.classList.remove('open'); };
+document.getElementById('openDrawer').addEventListener('click', openDrawer);
+document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
+scrim.addEventListener('click', closeDrawer);
+window.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+
+const themesEl = document.getElementById('themes');
+const renderThemes = () => {
+  themesEl.innerHTML = THEMES.map(t => `
+    <button class="theme ${t.id === theme.id ? 'sel' : ''}" data-id="${t.id}">
+      <div class="tt"><span>${t.name}</span><span class="sw" style="background:${t.primary}"></span></div>
+      <p>${t.desc}</p>
+    </button>`).join('');
+  themesEl.querySelectorAll('.theme').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.id)));
+};
+const setTheme = (id) => {
+  const next = THEMES.find(t => t.id === id) || THEMES[0];
+  if (next.id === theme.id) return;
+  theme = next;
+  renderThemes();
+  applyBg();
+  mountScene(theme.ball);
+};
+document.getElementById('resetTheme').addEventListener('click', () => setTheme('roseGold'));
+renderThemes();
+applyBg();
+
+/* =========================================================
+   Loader
+   ========================================================= */
+const loader = (() => {
+  const el = document.getElementById('loader');
+  const fill = document.getElementById('ldFill');
+  const count = document.getElementById('ldCount');
+  const status = document.getElementById('ldStatus');
+  let value = 0, ready = false, finished = false, last = performance.now();
+  requestAnimationFrame(() => el.classList.add('in'));
+  const tick = (now) => {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    if (!ready) value += (92 - value) * 1.7 * dt;
+    else { value += (100 - value) * 6 * dt; if (value >= 99.4) value = 100; }
+    fill.style.width = value + '%';
+    count.textContent = String(Math.floor(value)).padStart(3, '0') + '%';
+    status.textContent = value >= 100 ? 'Gateway online' : 'Calibrating gateway';
+    if (value >= 99.9 && ready && !finished) {
+      finished = true;
+      setTimeout(() => el.classList.add('leaving'), 140);
+      setTimeout(() => { el.style.display = 'none'; onDone(); }, 140 + 520);
+      return;
+    }
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+  // Safety net: never trap the page behind the loader on a slow / missing GPU.
+  setTimeout(() => { ready = true; }, 9000);
+  const onDone = () => {
+    control.started = true;
+    document.body.classList.add('revealed');
+  };
+  return { setReady() { ready = true; } };
+})();
+
+/* =========================================================
+   WebGL gravity field
+   ========================================================= */
+const clamp01 = (v) => (v < 0 ? 0 : v > 1 ? 1 : v);
+const smoothstep = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+const lerp = (a, b, t) => a + (b - a) * t;
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
+
+const getDynamicColors = (baseColor) => {
+  const hex = baseColor.toLowerCase();
+  if (hex === '#e1fc03') {
+    return { pastel: new THREE.Color('#FBFFE2'), light: new THREE.Color('#EFFE69'),
+      medium: new THREE.Color('#E1FC03'), deep: new THREE.Color('#B1E200'), glass: new THREE.Color('#DCFF32') };
+  } else if (hex === '#ffc5c2' || hex === '#ffa19e') {
+    return { pastel: new THREE.Color('#FFF5F4'), light: new THREE.Color('#FFECEB'),
+      medium: new THREE.Color('#FFA6B3'), deep: new THREE.Color('#FF4D6D'), glass: new THREE.Color('#FFA6B3') };
+  } else if (hex === '#96e5ff') {
+    return { pastel: new THREE.Color('#F0F9FF'), light: new THREE.Color('#C9F1FF'),
+      medium: new THREE.Color('#96E5FF'), deep: new THREE.Color('#2BA5FF'), glass: new THREE.Color('#98E4FF') };
+  } else if (hex === '#2f69ff') {
+    return { pastel: new THREE.Color('#ECEFFF'), light: new THREE.Color('#A8C1FF'),
+      medium: new THREE.Color('#2F69FF'), deep: new THREE.Color('#0A33BF'), glass: new THREE.Color('#4D80FF') };
+  } else if (hex === '#35f2de') {
+    // Sentinel teal: the "protected" state
+    return { pastel: new THREE.Color('#E8FFFC'), light: new THREE.Color('#A6F9EF'),
+      medium: new THREE.Color('#35F2DE'), deep: new THREE.Color('#0C9C88'), glass: new THREE.Color('#5CF5E5') };
+  } else if (hex === '#141414' || hex === '#000000') {
+    return { pastel: new THREE.Color('#D8D8D8'), light: new THREE.Color('#555555'),
+      medium: new THREE.Color('#242424'), deep: new THREE.Color('#0A0A0A'), glass: new THREE.Color('#1F1F1F') };
+  }
+  const c = new THREE.Color(baseColor);
+  return { pastel: c.clone().offsetHSL(0, -0.15, 0.25), light: c.clone().offsetHSL(0, -0.05, 0.12),
+    medium: c.clone(), deep: c.clone().offsetHSL(0.01, 0.1, -0.12), glass: c.clone() };
+};
+
+function createGravityScene({ canvas, container, ballColor, onReady }) {
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(38, container.clientWidth / container.clientHeight, 0.1, 100);
+  camera.position.set(0, 0, 11);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(container.clientWidth, container.clientHeight, false);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.15;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+
+  const hemiLight = new THREE.HemisphereLight(0xffffff, new THREE.Color(ballColor), 1.6);
+  scene.add(hemiLight);
+
+  const keyLight = new THREE.DirectionalLight(0xffffff, 1.4);
+  keyLight.position.set(-6, 10, 8);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.width = 2048;
+  keyLight.shadow.mapSize.height = 2048;
+  keyLight.shadow.camera.near = 0.5;
+  keyLight.shadow.camera.far = 30;
+  keyLight.shadow.camera.left = -8;
+  keyLight.shadow.camera.right = 8;
+  keyLight.shadow.camera.top = 8;
+  keyLight.shadow.camera.bottom = -8;
+  keyLight.shadow.bias = -0.0003;
+  keyLight.shadow.radius = 12.0;
+  scene.add(keyLight);
+
+  const rimLight = new THREE.DirectionalLight(0xffffff, 1.25);
+  rimLight.position.set(8, 7, -8);
+  scene.add(rimLight);
+
+  const frontLight = new THREE.DirectionalLight(0xffffff, 0.4);
+  frontLight.position.set(0, 0, 11);
+  scene.add(frontLight);
+
+  const sideBounceLight = new THREE.DirectionalLight(0xffffff, 0.3);
+  sideBounceLight.position.set(-9, -2, 4);
+  scene.add(sideBounceLight);
+
+  let viewportWidth = 10;
+  let viewportHeight = 6;
+  const updateFrustumBounds = () => {
+    const fovRad = THREE.MathUtils.degToRad(camera.fov);
+    viewportHeight = 2 * Math.tan(fovRad / 2) * camera.position.z;
+    viewportWidth = viewportHeight * (container.clientWidth / container.clientHeight);
+  };
+  updateFrustumBounds();
+
+  const isMobile = window.innerWidth < 768;
+  const ballCount = isMobile ? 54 : 96;
+
+  const palette = getDynamicColors(ballColor);
+  const isBlack = ['#141414', '#18181b', '#000000'].includes(ballColor.toLowerCase());
+
+  // Scroll-driven palettes: hero (base) → rose (pain / free-fall) → teal (shield).
+  const palHero = palette;
+  const palMid = getDynamicColors('#FFC5C2');
+  const palEnd = getDynamicColors('#35F2DE');
+  const ROLES = ['pastel', 'light', 'medium', 'deep', 'glass'];
+  const curPal = { pastel: new THREE.Color(), light: new THREE.Color(), medium: new THREE.Color(),
+    deep: new THREE.Color(), glass: new THREE.Color() };
+
+  const sphereGeometry = new THREE.SphereGeometry(1, 48, 48);
+  const balls = [];
+  for (let i = 0; i < ballCount; i++) {
+    let radius = 0.33;
+    const rand = Math.random();
+    if (rand < 0.3) radius = 0.27 + Math.random() * 0.12;
+    else if (rand < 0.8) radius = 0.42 + Math.random() * 0.18;
+    else radius = 0.66 + Math.random() * 0.21;
+
+    const mass = Math.pow(radius, 3);
+
+    let chosenColor = palette.medium;
+    let color = palette.medium;
+    let sphereMat;
+    let role = 'medium';
+
+    const isGlass = Math.random() < 0.22 && !isBlack;
+
+    if (isGlass) {
+      sphereMat = new THREE.MeshPhysicalMaterial({
+        color: palette.glass, roughness: 0.08, metalness: 0.0,
+        clearcoat: 1.0, clearcoatRoughness: 0.03, transmission: 0.95,
+        ior: 1.485, thickness: 2.2,
+        specularColor: new THREE.Color('#ffffff'), specularIntensity: 1.0,
+        attenuationColor: palette.pastel, attenuationDistance: 1.0,
+        emissive: palette.glass, emissiveIntensity: 0.12,
+        transparent: true,
+      });
+      color = palette.glass;
+      role = 'glass';
+    } else {
+      const colorRand = Math.random();
+      if (colorRand < 0.25) { chosenColor = palette.pastel; role = 'pastel'; }
+      else if (colorRand < 0.55) { chosenColor = palette.light; role = 'light'; }
+      else if (colorRand < 0.85) { chosenColor = palette.medium; role = 'medium'; }
+      else { chosenColor = palette.deep; role = 'deep'; }
+
+      sphereMat = new THREE.MeshPhysicalMaterial({
+        color: chosenColor, roughness: 0.44, metalness: 0.0,
+        clearcoat: 0.24, clearcoatRoughness: 0.35,
+        emissive: isBlack ? new THREE.Color('#000000') : chosenColor,
+        emissiveIntensity: isBlack ? 0.0 : 0.08,
+        transparent: true,
+      });
+      color = chosenColor;
+    }
+
+    const group = new THREE.Group();
+    const sphereMesh = new THREE.Mesh(sphereGeometry, sphereMat);
+    sphereMesh.scale.setScalar(radius);
+    sphereMesh.castShadow = true;
+    sphereMesh.receiveShadow = true;
+    group.add(sphereMesh);
+    scene.add(group);
+
+    balls.push({
+      id: i, radius, mass,
+      position: new THREE.Vector3(0, 0, 0),
+      velocity: new THREE.Vector3(),
+      meshGroup: group, sphere: sphereMesh, material: sphereMat, role, isGlass,
+      visualScale: radius, color,
+      restPosition: new THREE.Vector3(0, 0, 0),
+      shapeTarget: new THREE.Vector3(),
+      angleY: Math.random() * Math.PI * 2,
+      angleZ: 0.1 + Math.random() * 0.45,
+    });
+  }
+
+  const meanRadius = balls.reduce((sum, b) => sum + b.radius, 0) / balls.length;
+  let shapeScale = 1;
+
+  // Shield silhouette: flat top with raised corners, straight shoulders,
+  // sides tapering to a point.  Normalised bbox x ∈ [-1, 1], y ∈ [-1.35, 1].
+  const inShield = (x, y) => {
+    const ax = Math.abs(x);
+    if (y > 0.86 + 0.14 * x * x) return false;
+    if (y >= 0) return ax <= 1;
+    const t = -y / 1.35;
+    if (t > 1) return false;
+    return ax <= 1 - t * t;
+  };
+  const assignShapeTargets = () => {
+    const S = Math.min(viewportWidth * 0.30, viewportHeight * 0.30);
+    const baseCY = -viewportHeight * 0.03;
+    shapeScale = Math.max(0.3, Math.min(1, (S * 0.36 / 2.3) / meanRadius));
+    for (let i = 0; i < balls.length; i++) {
+      let x = 0, y = 0, tries = 0;
+      do {
+        x = Math.random() * 2 - 1;
+        y = Math.random() * 2.35 - 1.35;
+        tries++;
+      } while (!inShield(x, y) && tries < 60);
+      balls[i].shapeTarget.set(x * S * 1.05, (y + 0.18) * S + baseCY, (Math.random() - 0.5) * 0.35);
+    }
+  };
+  assignShapeTargets();
+
+  const scatterFar = (withInwardVelocity) => {
+    const R = Math.max(viewportWidth, viewportHeight) * 1.5;
+    for (const b of balls) {
+      const a = Math.random() * Math.PI * 2;
+      const px = Math.cos(a) * R * 1.25;
+      const py = Math.sin(a) * R * 0.85;
+      const pz = (Math.random() - 0.5) * 4;
+      b.position.set(px, py, pz);
+      b.meshGroup.position.copy(b.position);
+      if (withInwardVelocity) {
+        b.velocity.set(-px, -py, -pz).normalize().multiplyScalar(0.08 + Math.random() * 0.05);
+      } else {
+        b.velocity.set(0, 0, 0);
+      }
+    }
+  };
+  scatterFar(false);
+
+  const params = {
+    gravity: 0, rebound: -0.3,
+    mouseRepelForce: 0.05, mouseRepelRadius: 4.4,
+    damping: 0.91, centerAttractForce: 0.0035, bounciness: 0.02,
+  };
+
+  const mouseProjVec = new THREE.Vector3();
+  const mouseWorld3D = new THREE.Vector3();
+  const updateMouse3D = () => {
+    if (!mousePos) return;
+    mouseProjVec.set(mousePos.x, mousePos.y, 0.5);
+    mouseProjVec.unproject(camera);
+    const dir = mouseProjVec.sub(camera.position).normalize();
+    const distance = -camera.position.z / dir.z;
+    mouseWorld3D.copy(camera.position).add(dir.multiplyScalar(distance));
+  };
+
+  let animationFrameId = 0;
+  const clock = new THREE.Clock();
+  let localStarted = false;
+  let entranceStart = 0;
+  let reportedReady = false;
+
+  const diffVec = new THREE.Vector3();
+  const collideDiff = new THREE.Vector3();
+  const relVel = new THREE.Vector3();
+  const deltaPos = new THREE.Vector3();
+  const rotAxis = new THREE.Vector3();
+  const prevMouseWorld = new THREE.Vector3();
+  let mouseSpeed = 0;
+
+  const simulateAndRender = () => {
+    animationFrameId = requestAnimationFrame(simulateAndRender);
+
+    const time = clock.getElapsedTime();
+    clock.getDelta();
+    updateMouse3D();
+
+    const ctrl = control;
+
+    if (ctrl?.started && !localStarted) {
+      localStarted = true;
+      entranceStart = time;
+      scatterFar(true);
+    }
+
+    if (!localStarted) {
+      renderer.render(scene, camera);
+      if (!reportedReady) { reportedReady = true; onReady(); }
+      return;
+    }
+
+    const progress = ctrl?.progress ?? 0;
+
+    // --- mode blend factors ---
+    const heroF = 1 - smoothstep(0.30, 0.80, progress);
+    const dropRaw = smoothstep(0.40, 0.95, progress);
+    const flyF = smoothstep(2.7, 3.45, progress);
+    const shapeF = smoothstep(1.40, 2.05, progress) * (1 - smoothstep(2.55, 3.0, progress));
+    const dropF = dropRaw * (1 - smoothstep(1.25, 1.75, progress));
+
+    // Shield slides beside the reading column on wide screens.
+    const sideAmp = (container.clientWidth >= 1024 && camera.aspect > 1.15) ? viewportWidth * 0.23 : 0;
+    const shapeOffX = (ctrl?.side || 0) * sideAmp;
+
+    // --- scroll-driven palette morph: hero → rose → teal ---
+    const bMid = smoothstep(0.55, 1.05, progress);
+    const bEnd = smoothstep(1.40, 1.95, progress);
+    for (const role of ROLES) {
+      curPal[role].copy(palHero[role]).lerp(palMid[role], bMid).lerp(palEnd[role], bEnd);
+    }
+    hemiLight.groundColor.copy(curPal.medium);
+
+    const entranceT = easeOutCubic(clamp01((time - entranceStart) / 2.2));
+    const attractionBoost = lerp(7.5, 1, entranceT);
+
+    const isMouseInteracting = !!mousePos &&
+      (Math.abs(mousePos.x) < 0.99 || Math.abs(mousePos.y) < 0.99);
+
+    mouseSpeed = isMouseInteracting ? mouseWorld3D.distanceTo(prevMouseWorld) : 0;
+    if (mouseSpeed > 3) mouseSpeed = 3;
+    prevMouseWorld.copy(mouseWorld3D);
+
+    let damping = 0.91;
+    damping = lerp(damping, 0.992, dropF);
+    damping = lerp(damping, 0.90, shapeF);
+    damping = lerp(damping, 0.985, flyF);
+
+    const camZ = camera.position.z;
+    const clusterActive = Math.max(heroF, entranceT < 1 ? 1 : 0);
+
+    // 1. ACCELERATIONS
+    for (let i = 0; i < balls.length; i++) {
+      const b = balls[i];
+
+      if (heroF > 0.01) {
+        b.velocity.x += Math.sin(time * 0.4 + b.id * 1.5) * 0.0004 * b.radius * heroF;
+        b.velocity.y += Math.cos(time * 0.5 + b.id * 1.2) * 0.0004 * b.radius * heroF;
+        b.velocity.z += Math.sin(time * 0.35 + b.id) * 0.0001 * heroF;
+      }
+
+      const clusterStrength = params.centerAttractForce * attractionBoost * clusterActive;
+      if (clusterStrength > 0.00001) {
+        b.velocity.x += (0 - b.position.x) * clusterStrength * 0.38;
+        b.velocity.y += (0 - b.position.y) * clusterStrength * 1.85;
+        b.velocity.z += (0 - b.position.z) * clusterStrength * 1.8;
+      }
+
+      if (dropF > 0.001) {
+        b.velocity.y -= 0.011 * dropF;
+      }
+
+      if (shapeF > 0.001) {
+        const k = 0.06 * shapeF;
+        b.velocity.x += (b.shapeTarget.x + shapeOffX - b.position.x) * k;
+        b.velocity.y += (b.shapeTarget.y - b.position.y) * k;
+        b.velocity.z += (b.shapeTarget.z - b.position.z) * k;
+      }
+
+      if (flyF > 0.001) {
+        const stagger = (b.id * 0.6180339887) % 1;
+        const local = smoothstep(stagger * 0.55, stagger * 0.55 + 0.45, flyF);
+        b.velocity.z += 0.05 * local;
+        b.velocity.x += b.position.x * 0.006 * local;
+        b.velocity.y += b.position.y * 0.006 * local;
+      }
+
+      if (mousePos && isMouseInteracting) {
+        diffVec.subVectors(b.position, mouseWorld3D);
+        const rawDist = diffVec.length();
+        const down = mousePos.isDown;
+        const activeRepelRadius = down ? params.mouseRepelRadius * 1.4 : params.mouseRepelRadius;
+        const activeRepelForce = down ? params.mouseRepelForce * 1.7 : params.mouseRepelForce;
+        if (rawDist < activeRepelRadius && rawDist > 0.0001) {
+          const ratio = rawDist / activeRepelRadius;
+          const smoothFactor = 1.0 - (ratio * ratio * (3.0 - 2.0 * ratio));
+          const speedBoost = 1 + mouseSpeed * 3.2;
+          const push = smoothFactor * activeRepelForce * speedBoost;
+          diffVec.normalize();
+          diffVec.z *= 0.12;
+          diffVec.normalize();
+          b.velocity.addScaledVector(diffVec, push);
+        }
+      }
+
+      b.velocity.multiplyScalar(damping);
+      b.position.addScaledVector(b.velocity, 1);
+
+      const c = b.isGlass ? curPal.glass : curPal[b.role];
+      b.material.color.copy(c);
+      if (!isBlack) b.material.emissive.copy(c);
+
+      b.material.opacity = flyF > 0.001
+        ? 1 - smoothstep(camZ - 2.6, camZ - 0.3, b.position.z)
+        : 1;
+
+      const targetVis = b.radius * (1 - (1 - shapeScale) * shapeF);
+      b.visualScale += (targetVis - b.visualScale) * 0.12;
+      b.sphere.scale.setScalar(b.visualScale);
+    }
+
+    // 2. PAIRWISE COLLISIONS (nearly disabled in shape mode so balls snap onto the silhouette)
+    const collideScale = 0.28 * (1 - 0.93 * shapeF) * (1 - flyF);
+    const subSteps = 4;
+    for (let step = 0; step < subSteps; step++) {
+      for (let i = 0; i < balls.length; i++) {
+        for (let j = i + 1; j < balls.length; j++) {
+          const b1 = balls[i];
+          const b2 = balls[j];
+          collideDiff.subVectors(b2.position, b1.position);
+          const dist = collideDiff.length();
+          const minDist = b1.visualScale + b2.visualScale;
+          if (dist < minDist && dist > 0.001) {
+            const overlap = minDist - dist;
+            collideDiff.multiplyScalar(1 / dist);
+            const totalMass = b1.mass + b2.mass;
+            const ratio1 = b2.mass / totalMass;
+            const ratio2 = b1.mass / totalMass;
+            b1.position.addScaledVector(collideDiff, -overlap * ratio1 * collideScale);
+            b2.position.addScaledVector(collideDiff, overlap * ratio2 * collideScale);
+
+            relVel.subVectors(b2.velocity, b1.velocity);
+            const velAlongNormal = relVel.dot(collideDiff);
+            if (velAlongNormal < -0.0001) {
+              const impulse = -(1 + params.bounciness) * velAlongNormal / (1 / b1.mass + 1 / b2.mass);
+              b1.velocity.addScaledVector(collideDiff, -impulse / b1.mass);
+              b2.velocity.addScaledVector(collideDiff, impulse / b2.mass);
+            }
+          }
+        }
+      }
+    }
+
+    // 3. VIEWPORT WALLS + BOUNCY FLOOR
+    const borderPad = 0.2;
+    const xBound = viewportWidth / 2 - borderPad;
+    const topY = viewportHeight / 2 - 0.05;
+    const floorY = -viewportHeight / 2 + 0.05;
+    const zBound = 2.0;
+    const restitution = 0.30 + 0.35 * dropF;
+
+    const contain = flyF < 0.5;
+    const zContain = flyF < 0.02;
+
+    for (let i = 0; i < balls.length; i++) {
+      const b = balls[i];
+      const r = b.visualScale;
+
+      if (contain) {
+        if (b.position.x < -xBound - r) { b.position.x = -xBound - r; b.velocity.x *= params.rebound; }
+        else if (b.position.x > xBound + r) { b.position.x = xBound + r; b.velocity.x *= params.rebound; }
+
+        if (b.position.y - r < floorY) {
+          b.position.y = floorY + r;
+          if (b.velocity.y < 0) b.velocity.y = -b.velocity.y * restitution;
+          if (dropF > 0.3) { b.velocity.x *= 0.86; b.velocity.z *= 0.86; }
+        }
+        if (b.position.y + r > topY) {
+          b.position.y = topY - r;
+          if (b.velocity.y > 0) b.velocity.y *= params.rebound;
+        }
+      }
+
+      if (zContain) {
+        if (b.position.z < -zBound) { b.position.z = -zBound; b.velocity.z *= params.rebound; }
+        else if (b.position.z > zBound) { b.position.z = zBound; b.velocity.z *= params.rebound; }
+      }
+
+      deltaPos.copy(b.position).sub(b.meshGroup.position);
+      if (deltaPos.lengthSq() > 0.000001) {
+        rotAxis.set(deltaPos.y, -deltaPos.x, 0).normalize();
+        const rotAngle = (deltaPos.length() / b.radius) * 0.95;
+        b.meshGroup.rotateOnWorldAxis(rotAxis, rotAngle);
+      }
+      b.meshGroup.position.copy(b.position);
+    }
+
+    renderer.render(scene, camera);
+    if (!reportedReady) { reportedReady = true; onReady(); }
+  };
+
+  simulateAndRender();
+
+  const handleResize = () => {
+    const width = container.clientWidth;
+    const height = container.clientHeight;
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height, false);
+    updateFrustumBounds();
+    assignShapeTargets();
+  };
+  const ro = new ResizeObserver(handleResize);
+  ro.observe(container);
+
+  return {
+    dispose() {
+      cancelAnimationFrame(animationFrameId);
+      ro.disconnect();
+      sphereGeometry.dispose();
+      for (const b of balls) b.material.dispose();
+      renderer.dispose();
+      renderer.forceContextLoss();
+    }
+  };
+}
+
+/* mount / re-key on palette change */
+const stageEl = document.getElementById('stage');
+let current = null;
+let firstReady = false;
+function mountScene(ballColor) {
+  if (current) { current.dispose(); current = null; }
+  const old = stageEl.querySelector('canvas');
+  const canvas = document.createElement('canvas');
+  if (old) old.replaceWith(canvas); else stageEl.appendChild(canvas);
+  try {
+    current = createGravityScene({
+      canvas, container: stageEl, ballColor,
+      onReady: () => { if (!firstReady) { firstReady = true; loader.setReady(); } },
+    });
+  } catch (err) {
+    console.error('WebGL scene failed to start', err);
+    loader.setReady();
+  }
+}
+mountScene(theme.ball);
+</script>
+</body>
+</html>
