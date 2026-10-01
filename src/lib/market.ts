@@ -52,7 +52,8 @@ export async function jupQuote(inputMint: string, outputMint: string, amount: bi
   try {
     return await fetchJson<JupQuote>(url, { timeoutMs: 6000, retries: 1 });
   } catch (e) {
-    if (e instanceof HttpError && e.status === 400) return null;
+    // Only an explicit "no route" means unsellable; other 400s (bad amount, rate limits) are inconclusive.
+    if (e instanceof HttpError && e.status === 400 && /NO_ROUTE|COULD_NOT_FIND_ANY_ROUTE|TOKEN_NOT_TRADABLE|NOT_TRADABLE/i.test(e.body ?? '')) return null;
     throw e;
   }
 }

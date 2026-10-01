@@ -1,13 +1,24 @@
 import type { ScanContext } from '../context.js';
 import { BlockBuilder } from './util.js';
 
+const ESTABLISHED_LIQUIDITY_USD = 250_000;
+const ESTABLISHED_AGE_MS = 90 * 86_400_000;
+
 /** Authorities: mint / freeze authority, mutable metadata, dangerous Token-2022 extensions. Weight 15. */
 export async function rightsBlock(ctx: ScanContext) {
   const b = new BlockBuilder('rights', 'Authorities', 15);
-  const [mint, asset] = await Promise.all([ctx.mintInfo(), ctx.asset()]);
+  const [mint, asset, pairs, longHistory] = await Promise.all([ctx.mintInfo(), ctx.asset(), ctx.dexPairs().catch(() => []), ctx.longHistory().catch(() => false)]);
   let pts = 15;
+  // Protocol and DAO tokens keep mint/freeze authority on purpose (treasury, emissions). For a token that has
+  // traded for months with deep liquidity this is a governance fact, not a rug signal.
+  const liquidity = pairs.reduce((s, p) => s + (p.liquidity?.usd ?? 0), 0);
+  const firstListed = Math.min(...pairs.map((p) => p.pairCreatedAt ?? Infinity));
+  // Mature = deep liquidity plus either months of trading or a history longer than we page through on-chain.
+  const established = liquidity >= ESTABLISHED_LIQUIDITY_USD && (Date.now() - firstListed >= ESTABLISHED_AGE_MS || longHistory);
+  const authority = established ? 'warn' : 'critical';
 
   b.details = {
+    established,
     program: mint.program,
     mintAuthority: mint.mintAuthority,
     freezeAuthority: mint.freezeAuthority,
@@ -16,12 +27,16 @@ export async function rightsBlock(ctx: ScanContext) {
   };
 
   if (mint.mintAuthority) {
-    pts = 0;
-    b.flag('mint_authority_active', 'critical', 'Mint authority is active, so more supply can be minted at any time');
+    pts = established ? pts - 6 : 0;
+    b.flag('mint_authority_active', authority, established
+      ? 'Mint authority is active (established token, typically held by a DAO or treasury)'
+      : 'Mint authority is active, so more supply can be minted at any time');
   }
   if (mint.freezeAuthority) {
-    pts -= 8;
-    b.flag('freeze_authority_active', 'critical', 'Freeze authority is active, so your tokens can be frozen (honeypot)');
+    pts -= established ? 4 : 8;
+    b.flag('freeze_authority_active', authority, established
+      ? 'Freeze authority is active (established token, typically held by the issuer)'
+      : 'Freeze authority is active, so your tokens can be frozen (honeypot)');
   }
   if (asset?.mutable) {
     pts -= 3;

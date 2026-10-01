@@ -13,7 +13,7 @@ import { rightsBlock } from './blocks/rights.js';
 import { ScanContext } from './context.js';
 import { ScanInputError, type BlockId, type BlockResult, type ScanResult } from './types.js';
 
-export const RULES_VERSION = 'scan-v1.0';
+export const RULES_VERSION = 'scan-v1.1';
 /** Below this score Scan recommends a block (policy default `min_token_score`). */
 export const MIN_TOKEN_SCORE = 60;
 const BLOCK_TIMEOUT_MS = 12_000;

@@ -4,6 +4,8 @@ import type { ScanContext } from '../context.js';
 import { mainPair } from './liquidity.js';
 import { BlockBuilder, round1 } from './util.js';
 
+const SELL_TEST_USD = 50;
+
 /** Trading anomalies: wash trading, spikes, one-way flow + a sell test (honeypot). Weight 10. */
 export async function marketBlock(ctx: ScanContext) {
   const b = new BlockBuilder('market', 'Trading anomalies', 10);
@@ -11,8 +13,12 @@ export async function marketBlock(ctx: ScanContext) {
   const hasMarket = pairs.length > 0 || (curve.exists && !curve.complete);
   let pts = 10;
 
-  // Honeypot test: can ~0.05% of supply be sold for SOL?
-  const sellAmount = mint.supply / 2000n > 0n ? mint.supply / 2000n : 1n;
+  // Honeypot test: can a typical agent-sized position (~$50) be sold for SOL?
+  const main0 = pairs.length ? mainPair(pairs) : undefined;
+  const priceUsd = Number(main0?.priceUsd ?? 0);
+  const sellAmount =
+    priceUsd > 0 ? BigInt(Math.max(1, Math.round((SELL_TEST_USD / priceUsd) * 10 ** mint.decimals))) : mint.supply / 1_000_000n > 0n ? mint.supply / 1_000_000n : 1n;
+  const recentSells = main0?.txns?.h24?.sells ?? 0;
   let sellable: boolean | null = null;
   let priceImpactPct: number | null = null;
   try {
@@ -22,13 +28,16 @@ export async function marketBlock(ctx: ScanContext) {
   } catch {
     b.status = 'partial';
   }
-  if (hasMarket && sellable === false) {
+  // People actively selling is proof the token is sellable, whatever the router said.
+  if (hasMarket && sellable === false && recentSells < 5) {
     pts = 0;
     b.flag('no_sell_route', 'critical', 'The token cannot be sold: no sell route (honeypot)');
+  } else if (sellable === false) {
+    b.flag('sell_test_inconclusive', 'info', `No router quote for a sale, but ${recentSells} sells happened in 24h`);
   }
   if (priceImpactPct != null && priceImpactPct > 15) {
     pts -= 2;
-    b.flag('high_price_impact', 'warn', `Selling 0.05% of supply moves the price by ${round1(priceImpactPct)}%`);
+    b.flag('high_price_impact', 'warn', `Selling $${SELL_TEST_USD} worth moves the price by ${round1(priceImpactPct)}%`);
   }
 
   const main = pairs.length ? mainPair(pairs) : undefined;

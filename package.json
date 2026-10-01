@@ -12,7 +12,9 @@
     "e2e": "tsx scripts/e2e.ts",
     "build:vercel": "esbuild src/vercel.ts --bundle --platform=node --target=node20 --format=esm --outfile=api/index.mjs --alias:bindings=./src/shims/bindings.cjs --external:bufferutil --external:utf-8-validate --external:pino-pretty --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" --log-level=warning",
     "guard:devnet": "tsx scripts/guard-devnet.ts",
-    "mcp:check": "tsx scripts/mcp-check.ts"
+    "mcp:check": "tsx scripts/mcp-check.ts",
+    "usage": "tsx scripts/usage.ts",
+    "calibrate": "tsx scripts/calibrate.ts"
   },
   "engines": {
     "node": ">=20"

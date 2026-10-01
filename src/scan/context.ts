@@ -1,5 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
-import { getOldestSignatures, parseTransactions, rpc, type EnhancedTx } from '../lib/helius.js';
+import { getOldestSignatures, getSignatures, parseTransactions, rpc, type EnhancedTx } from '../lib/helius.js';
 import { dexPairsFor, type DexPair } from '../lib/market.js';
 import { PUMP_PROGRAM } from '../lib/programs.js';
 import { ScanInputError } from './types.js';
@@ -116,6 +116,11 @@ export class ScanContext {
         creator: creator === PublicKey.default.toBase58() ? null : creator,
       };
     });
+  }
+
+  /** True when the mint has 1000+ transactions: one cheap page instead of walking the whole history. */
+  longHistory(): Promise<boolean> {
+    return this.once('history', async () => (await getSignatures(this.mint, { limit: 1000 })).length >= 1000);
   }
 
   launch(): Promise<LaunchData> {
