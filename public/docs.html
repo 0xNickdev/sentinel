@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sentinel Docs · API, SDK and MCP reference</title>
+<meta name="description" content="Sentinel API reference: execute intents, check transactions, score tokens, guarded wallets, policies, reason codes, errors and limits." />
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#0E2AC5" />
+<link rel="canonical" href="https://sentinel-clawpump.vercel.app/docs" />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Sentinel" />
+<meta property="og:url" content="https://sentinel-clawpump.vercel.app/docs" />
+<meta property="og:title" content="Sentinel Docs" />
+<meta property="og:description" content="API, SDK and MCP reference for the Sentinel security gateway on Solana." />
+<meta property="og:image" content="https://sentinel-clawpump.vercel.app/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://sentinel-clawpump.vercel.app/og.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@400;500;700&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --n950:#0a0a0a; --n700:#404040; --n500:#737373; --n400:#a3a3a3; --n200:#e5e7ef; --n100:#f4f6fb;
+  --ok:#0C9C88; --warn:#C98300; --bad:#E0334F; --accent:#0E2AC5;
+  --font-display:"Space Grotesk",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --font-raleway:"Raleway",system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:88px}
+body{margin:0;background:#f7f8fd;color:var(--n950);font-family:var(--font-raleway);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+code{font-family:var(--font-mono);font-size:.86em;background:#fff;border:1px solid var(--n200);border-radius:6px;padding:1px 6px;overflow-wrap:anywhere}
+
+header{position:sticky;top:0;z-index:20;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;
+  background:rgba(247,248,253,.85);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--n200)}
+.brand{display:flex;align-items:baseline;gap:12px;color:var(--n950)}
+.brand b{font-family:var(--font-display);font-weight:700;font-size:16px;letter-spacing:.25em}
+.brand span{font-family:var(--font-mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.brand:hover{text-decoration:none}
+.top-links{display:flex;gap:20px;font-size:14px;font-weight:500}
+.top-links a{color:var(--n700)}
+
+.layout{max-width:1180px;margin:0 auto;padding:0 20px;display:grid;grid-template-columns:1fr;gap:40px}
+nav.toc{display:none}
+@media (min-width:960px){
+  .layout{grid-template-columns:220px minmax(0,1fr)}
+  nav.toc{display:block;position:sticky;top:88px;align-self:start;max-height:calc(100vh - 110px);overflow:auto;padding:28px 0 40px}
+}
+.toc p{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--n400);margin:22px 0 8px}
+.toc p:first-child{margin-top:0}
+.toc a{display:block;font-size:14px;color:var(--n700);padding:4px 0}
+.toc a:hover{color:var(--accent);text-decoration:none}
+
+main{padding:36px 0 96px;min-width:0}
+.eyebrow{font-family:var(--font-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent)}
+h1{font-weight:500;font-size:2.4rem;line-height:1.05;letter-spacing:-.025em;margin:10px 0 14px}
+@media (min-width:768px){h1{font-size:3.2rem}}
+h2{font-weight:600;font-size:1.55rem;letter-spacing:-.015em;margin:64px 0 12px;padding-top:8px;border-top:1px solid var(--n200)}
+h3{font-weight:600;font-size:1.1rem;margin:32px 0 8px}
+p{margin:0 0 14px;color:var(--n700);max-width:72ch}
+.lead{font-size:1.1rem;color:var(--n700)}
+ul{color:var(--n700);padding-left:20px;max-width:72ch}
+li{margin:4px 0}
+
+.ep{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:28px 0 8px}
+.ep h3{margin:0;font-family:var(--font-mono);font-size:1rem;font-weight:700;word-break:break-all}
+.m{font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 8px;border-radius:6px;color:#fff}
+.m.get{background:var(--ok)}.m.post{background:var(--accent)}
+.tag{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--n500);border:1px solid var(--n200);border-radius:99px;padding:2px 8px}
+
+pre{margin:12px 0 18px;background:#0b0d14;color:#d4d4d4;border-radius:14px;padding:18px 20px;overflow-x:auto;font-family:var(--font-mono);font-size:12.5px;line-height:1.7}
+pre .k{color:#9fb4ff}pre .s{color:#5ff5e4}pre .n{color:#E1FC03}pre .c{color:#737373}
+
+.tbl{width:100%;overflow-x:auto;margin:10px 0 20px;background:#fff;border:1px solid var(--n200);border-radius:14px}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:10px 14px;border-top:1px solid var(--n200)}
+th{border-top:0;font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--n500);font-weight:500;background:var(--n100)}
+td:first-child code{white-space:nowrap}
+
+.d{font-family:var(--font-mono);font-size:12px;font-weight:700}
+.d.allow{color:var(--ok)}.d.confirm{color:var(--warn)}.d.block{color:var(--bad)}.d.freeze{color:var(--n950)}.d.note{color:var(--n500)}
+.callout{background:#fff;border:1px solid var(--n200);border-left:3px solid var(--accent);border-radius:12px;padding:14px 16px;margin:16px 0;max-width:72ch}
+.callout p{margin:0}
+
+footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font-family:var(--font-mono);font-size:11px;letter-spacing:.12em;color:var(--n500)}
+</style>
+</head>
+<body>
+
+<header>
+  <a class="brand" href="/"><b>SENTINEL</b><span>Docs</span></a>
+  <div class="top-links">
+    <a href="/">Home</a>
+    <a href="https://github.com/0xNickdev/sentinel">GitHub</a>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="toc" aria-label="Contents">
+    <p>Start</p>
+    <a href="#overview">Overview</a>
+    <a href="#quickstart">Quickstart</a>
+    <a href="#decisions">Decisions</a>
+    <p>Endpoints</p>
+    <a href="#execute">Execute an intent</a>
+    <a href="#check">Check a transaction</a>
+    <a href="#scan">Score a token</a>
+    <a href="#journal">Decision log</a>
+    <a href="#guard">Guarded wallets</a>
+    <a href="#service">Health and defaults</a>
+    <p>Reference</p>
+    <a href="#policy">Policy</a>
+    <a href="#reasons">Reason codes</a>
+    <a href="#scoring">Scoring rules</a>
+    <a href="#errors">Errors and limits</a>
+    <p>Clients</p>
+    <a href="#sdk">TypeScript SDK</a>
+    <a href="#mcp">MCP server</a>
+  </nav>
+
+  <main>
+    <div class="eyebrow">API reference</div>
+    <h1>Sentinel docs</h1>
+    <p class="lead">Sentinel sits between an AI agent and its Solana wallet. It scores the token, builds and simulates the transaction, applies the owner's policy and returns a decision with an unsigned transaction. It never holds keys.</p>
+
+    <h2 id="overview">Overview</h2>
+    <div class="tbl"><table>
+      <tr><th>Item</th><th>Value</th></tr>
+      <tr><td>Base URL</td><td><code>https://sentinel-clawpump.vercel.app</code></td></tr>
+      <tr><td>Format</td><td>JSON over HTTPS. Transactions are base64-encoded serialized <code>VersionedTransaction</code>s.</td></tr>
+      <tr><td>Auth</td><td>None. The hosted API is free and open, CORS allows any origin.</td></tr>
+      <tr><td>Rate limit</td><td>30 requests per minute per IP on scan, execute, check, guard and MCP. Over the limit: <code>429</code> with <code>retry-after</code>.</td></tr>
+      <tr><td>Rules versions</td><td>Scan <code>scan-v1.1</code>, Bastion <code>bastion-v1.0</code>. Every result carries the version that produced it.</td></tr>
+      <tr><td>Network</td><td>Mainnet. Guard endpoints also accept <code>"cluster": "devnet"</code> for testing.</td></tr>
+    </table></div>
+
+    <h2 id="quickstart">Quickstart</h2>
+    <p>Replace direct signing with one request. Sign only when <code>decision</code> is <code>allow</code>.</p>
+<pre>curl -X POST https://sentinel-clawpump.vercel.app/api/execute \
+  -H 'content-type: application/json' \
+  -d '{
+  <span class="k">"intent"</span>: { <span class="k">"type"</span>: <span class="s">"buy"</span>, <span class="k">"wallet"</span>: <span class="s">"&lt;agent wallet&gt;"</span>, <span class="k">"mint"</span>: <span class="s">"&lt;token CA&gt;"</span>, <span class="k">"sol"</span>: <span class="n">0.5</span> },
+  <span class="k">"policy"</span>: { <span class="k">"limits"</span>: { <span class="k">"per_tx_sol"</span>: <span class="n">2</span> } }
+}'</pre>
+    <p>With the SDK, which also checks the transaction locally before signing:</p>
+<pre><span class="k">import</span> { Sentinel } <span class="k">from</span> <span class="s">'clawpump-sentinel'</span>;
+<span class="k">const</span> sentinel = <span class="k">new</span> Sentinel();
+<span class="k">const</span> res = <span class="k">await</span> sentinel.executeAndSend({ type: <span class="s">'buy'</span>, wallet, mint, sol: <span class="n">0.5</span> }, agentKeypair, connection);
+<span class="c">// res.signature is set only when the decision was "allow" and the local check passed</span></pre>
+
+    <h2 id="decisions">Decisions</h2>
+    <p>Every check ends in one of four decisions. The strictest reason wins.</p>
+    <div class="tbl"><table>
+      <tr><th>Decision</th><th>Meaning</th><th>Transaction returned</th></tr>
+      <tr><td><span class="d allow">allow</span></td><td>Passed every check.</td><td>Yes, unsigned</td></tr>
+      <tr><td><span class="d confirm">confirm</span></td><td>Needs the owner's approval, for example a new recipient.</td><td>Yes, unsigned. Show it to the owner first.</td></tr>
+      <tr><td><span class="d block">block</span></td><td>Failed a check: a risky token, a limit, a drainer pattern.</td><td>No</td></tr>
+      <tr><td><span class="d freeze">freeze</span></td><td>Kill-switch: looks like a compromised agent. On a guarded wallet it persists until the owner unfreezes.</td><td>No</td></tr>
+    </table></div>
+    <p>With <code>"mode": "warn"</code> the same analysis runs, <code>enforced</code> is <code>false</code> and the transaction is returned whatever Bastion decides, so you can watch verdicts before enforcing them. A token that fails Scan still returns no transaction.</p>
+
+    <h2 id="execute">Execute an intent</h2>
+    <div class="ep"><span class="m post">POST</span><h3>/api/execute</h3><span class="tag">rate limited</span></div>
+    <p>Scans the token being bought, builds the trade through Jupiter (or a plain SOL transfer), simulates it and applies the policy. Never signs.</p>
+    <h3>Request</h3>
+    <div class="tbl"><table>
+      <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+      <tr><td><code>intent</code></td><td>object</td><td>One of the intents below. Required.</td></tr>
+      <tr><td><code>policy</code></td><td>object</td><td>Optional. Merged over the <a href="#policy">default policy</a>.</td></tr>
+    </table></div>
+    <div class="tbl"><table>
+      <tr><th>intent.type</th><th>Fields</th></tr>
+      <tr><td><code>buy</code></td><td><code>wallet</code>, <code>mint</code>, <code>sol</code> (SOL to spend), optional <code>slippageBps</code></td></tr>
+      <tr><td><code>sell</code></td><td><code>wallet</code>, <code>mint</code>, <code>amount</code> (token units, not raw), optional <code>slippageBps</code></td></tr>
+      <tr><td><code>swap</code></td><td><code>wallet</code>, <code>inputMint</code>, <code>outputMint</code>, <code>amount</code> (input token units), optional <code>slippageBps</code></td></tr>
+      <tr><td><code>transfer</code></td><td><code>wallet</code>, <code>to</code>, <code>sol</code></td></tr>
+    </table></div>
+    <p><code>slippageBps</code> is 1 to 5000, default 100. <code>wallet</code> is the agent's address; the returned transaction has it as fee payer and signer.</p>
+    <h3>Response</h3>
+<pre>{
+  <span class="k">"decision"</span>: <span class="s">"allow"</span>,                 <span class="c">// allow | confirm | block | freeze</span>
+  <span class="k">"enforced"</span>: <span class="n">true</span>,                    <span class="c">// false in warn mode</span>
+  <span class="k">"transaction"</span>: <span class="s">"AQAAAA…"</span>,            <span class="c">// unsigned base64, null on block / freeze</span>
+  <span class="k">"requiresOwnerConfirmation"</span>: <span class="n">false</span>,
+  <span class="k">"reasons"</span>: [],                        <span class="c">// see Reason codes</span>
+  <span class="k">"intent"</span>: { … },
+  <span class="k">"scan"</span>: { <span class="k">"mint"</span>, <span class="k">"symbol"</span>, <span class="k">"score"</span>, <span class="k">"verdict"</span>, <span class="k">"criticalFlags"</span> },   <span class="c">// null for sells and transfers</span>
+  <span class="k">"bastion"</span>: { … },                     <span class="c">// full Bastion result, see Check a transaction</span>
+  <span class="k">"journalId"</span>: <span class="s">"f91daca5-…"</span>,
+  <span class="k">"durationMs"</span>: <span class="n">1840</span>
+}</pre>
+
+    <h2 id="check">Check a transaction</h2>
+    <div class="ep"><span class="m post">POST</span><h3>/api/bastion/check</h3><span class="tag">rate limited</span></div>
+    <p>For agents that build their own transactions. Send one before signing and get Bastion's verdict.</p>
+    <div class="tbl"><table>
+      <tr><th>Field</th><th>Type</th><th>Notes</th></tr>
+      <tr><td><code>transaction</code></td><td>string</td><td>Base64 serialized transaction. Required.</td></tr>
+      <tr><td><code>wallet</code></td><td>string</td><td>Whose funds to judge. Defaults to the fee payer.</td></tr>
+      <tr><td><code>policy</code></td><td>object</td><td>Optional, merged over the default.</td></tr>
+    </table></div>
+<pre>{
+  <span class="k">"decision"</span>: <span class="s">"confirm"</span>, <span class="k">"enforced"</span>: <span class="n">true</span>, <span class="k">"wallet"</span>: <span class="s">"…"</span>,
+  <span class="k">"reasons"</span>: [{ <span class="k">"id"</span>: <span class="s">"new_recipient"</span>, <span class="k">"action"</span>: <span class="s">"confirm"</span>, <span class="k">"message"</span>: <span class="s">"Transfer of 0.5 SOL to a new address …"</span> }],
+  <span class="k">"simulation"</span>: { <span class="k">"success"</span>: <span class="n">true</span>, <span class="k">"error"</span>: <span class="n">null</span>, <span class="k">"logsTail"</span>: [], <span class="k">"unitsConsumed"</span>: <span class="n">450</span> },
+  <span class="k">"changes"</span>: { <span class="k">"sol"</span>: <span class="n">-0.500005</span>, <span class="k">"tokens"</span>: [{ <span class="k">"mint"</span>, <span class="k">"symbol"</span>, <span class="k">"amount"</span>, <span class="k">"valueSol"</span> }] },
+  <span class="k">"spend"</span>: { <span class="k">"txSol"</span>, <span class="k">"perTxLimitSol"</span>, <span class="k">"day24hSol"</span>, <span class="k">"perDayLimitSol"</span>, <span class="k">"txLastHour"</span> },
+  <span class="k">"programs"</span>: [{ <span class="k">"id"</span>, <span class="k">"name"</span>, <span class="k">"allowed"</span> }],
+  <span class="k">"recipients"</span>: [{ <span class="k">"address"</span>, <span class="k">"amount"</span>, <span class="k">"asset"</span>, <span class="k">"isNew"</span> }],
+  <span class="k">"tokenScans"</span>: [{ <span class="k">"mint"</span>, <span class="k">"score"</span>, <span class="k">"verdict"</span>, <span class="k">"critical"</span> }],
+  <span class="k">"slippageBps"</span>: <span class="n">null</span>,
+  <span class="k">"rulesVersion"</span>: <span class="s">"bastion-v1.0"</span>, <span class="k">"durationMs"</span>: <span class="n">912</span>, <span class="k">"journalId"</span>: <span class="s">"…"</span>
+}</pre>
+    <p>Bastion runs, in order: simulation, drainer patterns, program allowlist, per-trade and daily limits, recipients, a Scan of every token the wallet receives, effective slippage against a fresh Jupiter quote, and the kill-switch rules.</p>
+
+    <h2 id="scan">Score a token</h2>
+    <div class="ep"><span class="m get">GET</span><h3>/api/scan/:mint</h3><span class="tag">rate limited</span></div>
+    <p>0 to 100 risk score for any SPL or Token-2022 mint on mainnet, with flags and a per-block breakdown. Results are cached for 60 seconds (<code>cached: true</code>).</p>
+<pre>{
+  <span class="k">"mint"</span>: <span class="s">"…"</span>, <span class="k">"name"</span>: <span class="s">"…"</span>, <span class="k">"symbol"</span>: <span class="s">"…"</span>,
+  <span class="k">"score"</span>: <span class="n">71</span>, <span class="k">"verdict"</span>: <span class="s">"warn"</span>, <span class="k">"risk"</span>: <span class="s">"medium"</span>,
+  <span class="k">"criticalFlags"</span>: [], <span class="k">"flags"</span>: [{ <span class="k">"id"</span>, <span class="k">"severity"</span>, <span class="k">"message"</span> }],
+  <span class="k">"blocks"</span>: [{ <span class="k">"id"</span>: <span class="s">"holders"</span>, <span class="k">"label"</span>: <span class="s">"Holders"</span>, <span class="k">"weight"</span>: <span class="n">20</span>, <span class="k">"score"</span>: <span class="n">12.1</span>, <span class="k">"status"</span>: <span class="s">"ok"</span>, <span class="k">"details"</span>: { … }, <span class="k">"flags"</span>: [] }],
+  <span class="k">"rulesVersion"</span>: <span class="s">"scan-v1.1"</span>, <span class="k">"scannedAt"</span>: <span class="s">"…"</span>, <span class="k">"durationMs"</span>: <span class="n">1063</span>, <span class="k">"cached"</span>: <span class="n">false</span>,
+  <span class="k">"disclaimer"</span>: <span class="s">"The score is a risk indicator, not financial advice."</span>
+}</pre>
+    <p>See <a href="#scoring">Scoring rules</a> for how the score and verdict are computed.</p>
+
+    <h2 id="journal">Decision log</h2>
+    <div class="ep"><span class="m get">GET</span><h3>/api/journal?wallet=&amp;limit=</h3></div>
+    <p>Every execute, check, freeze and unfreeze with its reasons and rules version, newest first. <code>limit</code> defaults to 50, max 200.</p>
+<pre>[{ <span class="k">"id"</span>, <span class="k">"at"</span>, <span class="k">"kind"</span>: <span class="s">"execute"</span>, <span class="k">"wallet"</span>, <span class="k">"summary"</span>: <span class="s">"buy USDC for 0.02 SOL"</span>, <span class="k">"decision"</span>, <span class="k">"enforced"</span>, <span class="k">"reasons"</span>, <span class="k">"rulesVersion"</span> }]</pre>
+
+    <h2 id="guard">Guarded wallets</h2>
+    <p>A guarded wallet is a Squads v4 multisig with threshold 1. The owner has every permission, the agent can propose and execute, Sentinel can only vote. Nothing executes without a vote and the agent has none, so funds move only when Sentinel (or the owner) approves. The check is enforced by the Squads program on-chain.</p>
+    <p>All guard endpoints are <code>POST</code>, rate limited, and accept <code>"cluster": "mainnet" | "devnet"</code> (default mainnet).</p>
+    <div class="tbl"><table>
+      <tr><th>Endpoint</th><th>Body</th><th>Returns</th></tr>
+      <tr><td><code>/api/guard/setup</code></td><td><code>owner</code>, <code>agent</code>, optional <code>fundSol</code></td><td><code>multisig</code>, <code>vault</code>, <code>sentinel</code>, <code>telegramLink</code>, <code>transaction</code> for the owner to sign</td></tr>
+      <tr><td><code>/api/guard/execute</code></td><td><code>multisig</code>, <code>intent</code>, optional <code>policy</code></td><td>Decision, reasons, <code>transactionIndex</code>, <code>approvedBySentinel</code>, <code>approvalUrl</code> on confirm, and the proposal <code>transaction</code> for the agent to sign</td></tr>
+      <tr><td><code>/api/guard/finalize</code></td><td><code>multisig</code>, <code>agent</code>, <code>transactionIndex</code></td><td>The execute <code>transaction</code> once the proposal is approved</td></tr>
+      <tr><td><code>/api/guard/status</code></td><td><code>multisig</code></td><td>Members and permissions, <code>vaultSol</code>, <code>threshold</code>, <code>frozen</code></td></tr>
+      <tr><td><code>/api/guard/revoke</code></td><td><code>multisig</code>, <code>owner</code>, <code>agent</code></td><td>A transaction for the owner that removes the agent, no Sentinel vote needed</td></tr>
+    </table></div>
+    <p>Guard intents use <code>agent</code> instead of <code>wallet</code>: <code>buy</code> (<code>mint</code>, <code>sol</code>), <code>sell</code> (<code>mint</code>, <code>amount</code>) and <code>transfer</code> (<code>to</code>, <code>sol</code>). Funds move from the vault.</p>
+    <p>Owner-side endpoints used by the approval page: <code>/api/guard/proposal</code>, <code>/api/guard/approve</code>, <code>/api/guard/reject</code>, <code>/api/guard/send</code>, <code>/api/guard/unfreeze-message</code> and <code>/api/guard/unfreeze</code>. Unfreezing requires the owner's signature over the message. <code>GET /api/guard/sentinel</code> returns Sentinel's voting key.</p>
+
+    <h2 id="service">Health and defaults</h2>
+    <div class="ep"><span class="m get">GET</span><h3>/api/health</h3></div>
+    <p>Service status and the active rules versions.</p>
+    <div class="ep"><span class="m get">GET</span><h3>/api/policy/default</h3></div>
+    <p>The default policy as JSON.</p>
+
+    <h2 id="policy">Policy</h2>
+    <p>Send any subset; missing fields fall back to the defaults.</p>
+    <div class="tbl"><table>
+      <tr><th>Field</th><th>Default</th><th>Meaning</th></tr>
+      <tr><td><code>limits.per_tx_sol</code></td><td>2</td><td>Max value of one trade, in SOL (tokens sent are valued at market price)</td></tr>
+      <tr><td><code>limits.per_day_sol</code></td><td>10</td><td>Max value out of the wallet in 24 hours, this trade included</td></tr>
+      <tr><td><code>programs</code></td><td><code>["pump.fun", "jupiter"]</code></td><td>Venues the wallet may call directly: <code>pump.fun</code>, <code>jupiter</code>, <code>raydium</code>, <code>orca</code>, <code>meteora</code> or a raw program id. System, token, associated token, compute budget and memo programs are always allowed.</td></tr>
+      <tr><td><code>min_token_score</code></td><td>60</td><td>Tokens scoring below are blocked</td></tr>
+      <tr><td><code>max_slippage_bps</code></td><td>300</td><td>Max effective slippage against a fresh quote</td></tr>
+      <tr><td><code>new_recipient</code></td><td><code>"confirm"</code></td><td><code>allow</code>, <code>confirm</code> or <code>block</code> for transfers to addresses the wallet never paid before</td></tr>
+      <tr><td><code>recipients</code></td><td><code>[]</code></td><td>Pre-approved recipient addresses</td></tr>
+      <tr><td><code>max_tx_per_hour</code></td><td>20</td><td>Reaching it trips the kill-switch</td></tr>
+      <tr><td><code>mode</code></td><td><code>"enforce"</code></td><td><code>warn</code> reports decisions without blocking</td></tr>
+    </table></div>
+
+    <h2 id="reasons">Reason codes</h2>
+    <div class="tbl"><table>
+      <tr><th>id</th><th>Action</th><th>When</th></tr>
+      <tr><td><code>simulation_failed</code></td><td><span class="d block">block</span></td><td>The transaction would fail on-chain</td></tr>
+      <tr><td><code>token_approve</code></td><td><span class="d block">block</span></td><td>Grants someone the right to spend the wallet's tokens. Always blocked.</td></tr>
+      <tr><td><code>token_set_authority</code></td><td><span class="d block">block</span></td><td>Hands a token account to another owner. Always blocked.</td></tr>
+      <tr><td><code>system_assign</code></td><td><span class="d block">block</span></td><td>Reassigns the wallet to another program. Always blocked.</td></tr>
+      <tr><td><code>program_not_allowed</code></td><td><span class="d block">block</span></td><td>Calls a program outside the allowlist</td></tr>
+      <tr><td><code>per_tx_limit</code></td><td><span class="d block">block</span></td><td>Trade value above <code>per_tx_sol</code></td></tr>
+      <tr><td><code>per_day_limit</code></td><td><span class="d block">block</span></td><td>24-hour outflow above <code>per_day_sol</code></td></tr>
+      <tr><td><code>new_recipient</code></td><td>per policy</td><td>Transfer to an address the wallet never paid and not in <code>recipients</code></td></tr>
+      <tr><td><code>scan_critical</code></td><td><span class="d block">block</span></td><td>The token has a critical flag</td></tr>
+      <tr><td><code>scan_low_score</code></td><td><span class="d block">block</span></td><td>The token scores below <code>min_token_score</code></td></tr>
+      <tr><td><code>scan_unavailable</code></td><td><span class="d confirm">confirm</span></td><td>A received token could not be scanned</td></tr>
+      <tr><td><code>slippage</code></td><td><span class="d block">block</span></td><td>Effective slippage above <code>max_slippage_bps</code></td></tr>
+      <tr><td><code>kill_amount_spike</code></td><td><span class="d freeze">freeze</span></td><td>Trade value above 5× <code>per_tx_sol</code></td></tr>
+      <tr><td><code>kill_drain</code></td><td><span class="d freeze">freeze</span></td><td>Moves 90% or more of the balance and is above <code>per_tx_sol</code></td></tr>
+      <tr><td><code>kill_frequency</code></td><td><span class="d freeze">freeze</span></td><td><code>max_tx_per_hour</code> reached</td></tr>
+      <tr><td><code>wallet_frozen</code></td><td><span class="d freeze">freeze</span></td><td>Guarded wallet is frozen until the owner unfreezes it</td></tr>
+      <tr><td><code>history_unavailable</code>, <code>history_partial</code></td><td><span class="d note">note</span></td><td>The daily limit could not count the full 24 hours</td></tr>
+    </table></div>
+
+    <h2 id="scoring">Scoring rules</h2>
+    <p>Seven blocks add up to 100. A block whose data source fails gets half its weight and <code>status: "error"</code>, so one outage cannot pass or sink a token on its own.</p>
+    <div class="tbl"><table>
+      <tr><th>Block</th><th>Weight</th><th>What it looks at</th></tr>
+      <tr><td>Creator</td><td>20</td><td>Past launches, dead-token rate, dev dump, wallet age</td></tr>
+      <tr><td>Holders</td><td>20</td><td>Top-10 share, largest wallet, clusters funded from one SOL source</td></tr>
+      <tr><td>Bundles &amp; snipers</td><td>15</td><td>Buys in the first blocks after launch</td></tr>
+      <tr><td>Authorities</td><td>15</td><td>Mint and freeze authority, mutable metadata, Token-2022 extensions</td></tr>
+      <tr><td>Liquidity</td><td>15</td><td>Pool depth, LP lock</td></tr>
+      <tr><td>Trading anomalies</td><td>10</td><td>Sell test (honeypot) and its price impact, wash trading, spikes, crashes</td></tr>
+      <tr><td>Metadata</td><td>5</td><td>Impersonation, duplicate tickers, broken links</td></tr>
+    </table></div>
+    <h3>Verdict</h3>
+    <ul>
+      <li><span class="d block">block</span> when there is any critical flag or the score is below 60</li>
+      <li><span class="d confirm">warn</span> when the score is 60 to 74</li>
+      <li><span class="d allow">allow</span> at 75 and above</li>
+    </ul>
+    <h3>Critical flags</h3>
+    <p>Each one blocks the token regardless of score:</p>
+    <div class="tbl"><table>
+      <tr><th>id</th><th>Meaning</th></tr>
+      <tr><td><code>mint_authority_active</code></td><td>Someone can still mint new supply. A warning instead of critical for established tokens.</td></tr>
+      <tr><td><code>freeze_authority_active</code></td><td>Someone can freeze holders' tokens. A warning instead of critical for established tokens.</td></tr>
+      <tr><td><code>permanent_delegate</code></td><td>A Token-2022 delegate can take tokens from any wallet</td></tr>
+      <tr><td><code>non_transferable</code></td><td>The token cannot be sold</td></tr>
+      <tr><td><code>pausable</code></td><td>Transfers can be paused</td></tr>
+      <tr><td><code>default_frozen</code></td><td>New token accounts start frozen</td></tr>
+      <tr><td><code>no_sell_route</code></td><td>No route to sell (honeypot)</td></tr>
+      <tr><td><code>no_real_liquidity</code></td><td>Almost no liquidity to trade against</td></tr>
+    </table></div>
+    <p>Warning flags: <code>bundle_launch</code>, <code>creator_funded_holders</code>, <code>creator_rugs</code>, <code>dev_dump</code>, <code>fresh_creator</code>, <code>funding_cluster</code>, <code>high_price_impact</code>, <code>high_transfer_fee</code>, <code>impersonation</code>, <code>low_liquidity</code>, <code>metadata_mutable</code>, <code>metadata_unreachable</code>, <code>mint_close_authority</code>, <code>no_liquidity</code>, <code>no_sells</code>, <code>price_crash</code>, <code>price_spike</code>, <code>serial_launcher</code>, <code>snipers_heavy</code>, <code>top10_concentrated</code>, <code>transfer_hook</code>, <code>wash_trading_suspected</code>, <code>whale</code>.</p>
+    <p>The full rules are open source in <a href="https://github.com/0xNickdev/sentinel/tree/main/src/scan">src/scan</a>.</p>
+
+    <h2 id="errors">Errors and limits</h2>
+    <p>Errors come back as <code>{ "error": "message" }</code>.</p>
+    <div class="tbl"><table>
+      <tr><th>Status</th><th>When</th></tr>
+      <tr><td><code>400</code></td><td>Invalid intent, policy, address or transaction</td></tr>
+      <tr><td><code>403</code></td><td>Guard: the agent or Sentinel is not a member with the needed permission</td></tr>
+      <tr><td><code>404</code></td><td>Mint or proposal not found</td></tr>
+      <tr><td><code>409</code></td><td>Guard: the proposal is not approved yet</td></tr>
+      <tr><td><code>422</code></td><td>The address is not a token mint, or no route fits a guarded transaction</td></tr>
+      <tr><td><code>429</code></td><td>Rate limit. Wait for <code>retry-after</code> seconds.</td></tr>
+      <tr><td><code>502</code></td><td>An upstream source (RPC, Jupiter) failed. Safe to retry.</td></tr>
+      <tr><td><code>503</code></td><td>The service is missing configuration</td></tr>
+    </table></div>
+    <div class="callout"><p><b>Fail closed.</b> Treat any error or timeout as "do not sign". The SDK does this for you: it throws and signs nothing. A guarded wallet cannot move funds without Sentinel's vote at all, while the owner keeps every permission.</p></div>
+    <ul>
+      <li>Request body up to 256 KB</li>
+      <li>One request runs up to 30 seconds; a scan block that takes over 12 seconds gets the half-weight fallback</li>
+      <li>Scan results are cached for 60 seconds</li>
+    </ul>
+
+    <h2 id="sdk">TypeScript SDK</h2>
+<pre>npm i clawpump-sentinel @solana/web3.js</pre>
+    <div class="tbl"><table>
+      <tr><th>Method</th><th>What it does</th></tr>
+      <tr><td><code>scan(mint)</code></td><td>Token score</td></tr>
+      <tr><td><code>execute(intent, { policy })</code></td><td>Decision and unsigned transaction</td></tr>
+      <tr><td><code>executeAndSend(intent, signer, connection, { policy, verify })</code></td><td>Executes, checks locally, signs and sends only on <code>allow</code></td></tr>
+      <tr><td><code>check(tx, { wallet, policy })</code></td><td>Bastion verdict for your own transaction</td></tr>
+      <tr><td><code>journal({ wallet, limit })</code></td><td>Decision log</td></tr>
+      <tr><td><code>guard.setup / execute / finalize / status</code></td><td>Guarded wallet calls</td></tr>
+      <tr><td><code>guard.run(params, agent, connection)</code></td><td>Propose, check locally, execute in one call</td></tr>
+    </table></div>
+    <h3>Local check before signing</h3>
+    <p>Before <code>executeAndSend</code> and <code>guard.run</code> sign, the SDK simulates the transaction on your own <code>connection</code> and compares the result with the intent:</p>
+    <ul>
+      <li>SOL leaving the wallet stays within the intent amount plus 0.005 SOL for fees and rent</li>
+      <li>no other token balance drops; on a sell, at most the amount you asked to sell leaves</li>
+      <li>on a buy the token you asked for arrives; on a transfer the recipient you named gets paid</li>
+      <li>no token account gets a delegate or a new owner, and the wallet is not reassigned</li>
+    </ul>
+    <p>A mismatch throws <code>VerificationError</code> and nothing is signed. You can run it on any transaction with <code>verifyTransaction(connection, tx, expectationFor(intent, wallet))</code>. Requests time out after 30 seconds (<code>new Sentinel({ timeoutMs })</code>).</p>
+
+    <h2 id="mcp">MCP server</h2>
+    <p>Streamable HTTP, stateless. Add it to your agent as a custom connector:</p>
+<pre>https://sentinel-clawpump.vercel.app/api/mcp</pre>
+    <div class="tbl"><table>
+      <tr><th>Tool</th><th>Same as</th></tr>
+      <tr><td><code>scan_token</code></td><td><code>GET /api/scan/:mint</code></td></tr>
+      <tr><td><code>execute_intent</code></td><td><code>POST /api/execute</code></td></tr>
+      <tr><td><code>check_transaction</code></td><td><code>POST /api/bastion/check</code></td></tr>
+      <tr><td><code>guard_setup</code>, <code>guard_execute</code>, <code>guard_finalize</code>, <code>guard_status</code></td><td>The guard endpoints</td></tr>
+      <tr><td><code>decision_log</code></td><td><code>GET /api/journal</code></td></tr>
+    </table></div>
+    <p>MCP and REST clients get the server-side checks. The local check before signing is part of the SDK.</p>
+  </main>
+</div>
+
+<footer>© 2026 Sentinel · ClawPump ecosystem · Scores and decisions are risk indicators, not financial advice.</footer>
+</body>
+</html>
