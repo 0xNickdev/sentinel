@@ -131,7 +131,22 @@ export async function handleUpdate(update: Update, linkWallet: (ms: string, clus
     return send(chat, `🛡 <b>Linked</b>\nYou'll get alerts for guarded wallet <code>${short(ms)}</code>${cluster === 'devnet' ? ' (devnet)' : ''}: approvals, blocks and kill-switch freezes.\n\n/status to check it, /stop to unlink.`);
   }
   if (cmd === '/start' || cmd === '/help') {
-    return send(chat, `🛡 <b>Sentinel</b>\nSecurity for AI agent wallets on Solana.\n\n/check &lt;token CA&gt; scores any token for free\n/status shows your linked wallets\n/stop unlinks this chat\n\nTo get owner alerts, open the Telegram link from your guarded wallet setup.`);
+    return send(
+      chat,
+      [
+        '🛡 <b>Welcome to Sentinel</b>',
+        'Risk checks for Solana tokens, built for AI agents and the people who run them.',
+        '',
+        '<b>Check a token</b>',
+        'Paste a token address or send /check &lt;CA&gt;. In a few seconds you get a 0-100 score, a verdict and the main red flags.',
+        '',
+        '<b>Owner alerts</b>',
+        'If your agent trades from a guarded wallet, open the Telegram link from the wallet setup. Approvals, blocks and kill-switch freezes will arrive in this chat.',
+        '',
+        '/status linked wallets · /stop unlink this chat',
+      ].join('\n'),
+      [{ text: 'Open Sentinel', url: PUBLIC_URL }],
+    );
   }
   if (cmd === '/stop') {
     await unsubscribeChat(chat);
