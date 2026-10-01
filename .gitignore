@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+sdk/node_modules/
+
+# build output
+sdk/dist/
+api/index.mjs
+
+# secrets and local environment
+.env
+.env.*
+!.env.example
+.vercel/
+
+# misc
+*.log
+.DS_Store

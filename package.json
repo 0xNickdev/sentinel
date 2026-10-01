@@ -1,0 +1,38 @@
+{
+  "name": "sentinel",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Sentinel — security gateway between AI agents and wallets (ClawPump · Solana). Scan core.",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "tsx src/server.ts",
+    "scan": "tsx src/cli.ts",
+    "typecheck": "tsc --noEmit",
+    "e2e": "tsx scripts/e2e.ts",
+    "build:vercel": "esbuild src/vercel.ts --bundle --platform=node --target=node20 --format=esm --outfile=api/index.mjs --alias:bindings=./src/shims/bindings.cjs --external:bufferutil --external:utf-8-validate --external:pino-pretty --banner:js=\"import { createRequire } from 'node:module'; const require = createRequire(import.meta.url);\" --log-level=warning",
+    "guard:devnet": "tsx scripts/guard-devnet.ts",
+    "mcp:check": "tsx scripts/mcp-check.ts"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@fastify/cors": "^10.1.0",
+    "@fastify/static": "^8.3.0",
+    "@modelcontextprotocol/sdk": "^1.31.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "@solana/web3.js": "^1.99.0",
+    "@sqds/multisig": "^2.1.4",
+    "bs58": "^6.0.0",
+    "dotenv": "^16.6.1",
+    "fastify": "^5.12.5",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "esbuild": "^0.25.12",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3"
+  }
+}
