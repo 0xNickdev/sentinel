@@ -128,6 +128,8 @@ export async function rateLimitHit(ip: string, max: number, windowMs: number): P
       hits = CASE WHEN rate_limits.window_start < now() - make_interval(secs => ${windowMs / 1000}) THEN 1 ELSE rate_limits.hits + 1 END,
       window_start = CASE WHEN rate_limits.window_start < now() - make_interval(secs => ${windowMs / 1000}) THEN now() ELSE rate_limits.window_start END
     RETURNING hits, extract(epoch FROM (window_start + make_interval(secs => ${windowMs / 1000}) - now())) AS wait`;
+  // IPs are only needed for the current window: about one request in a hundred sweeps out rows older than a day.
+  if (Math.random() < 0.01) await sql`DELETE FROM rate_limits WHERE window_start < now() - interval '1 day'`.catch(() => {});
   return rows[0].hits <= max ? 0 : Math.max(1, Math.ceil(Number(rows[0].wait)));
 }
 
