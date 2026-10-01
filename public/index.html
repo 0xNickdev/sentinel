@@ -378,6 +378,7 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
     <a href="#pain" data-nav>Problem</a>
     <a href="#flow" data-nav>How it works</a>
     <a href="#modules" data-nav>Scan &amp; Bastion</a>
+    <a href="#guard" data-nav>Guard</a>
     <a href="#api" data-nav>API</a>
     <a href="#trust" data-nav>Trust</a>
   </nav>
@@ -569,10 +570,49 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
     </div>
   </section>
 
-  <!-- ============ 06 · API ============ -->
-  <section class="sec side" id="api" data-p="2.3,2.35" data-side="-1">
+  <!-- ============ 06 · GUARD ============ -->
+  <section class="sec side" id="guard" data-p="2.3,2.35" data-side="-1">
     <div class="side-col pe">
-      <div class="label rv">[ 06 · API ]</div>
+      <div class="label rv">[ 06 · Guard ]</div>
+      <h2 class="h-display rv" data-delay=".1">The agent can't skip the check.</h2>
+      <p class="body-copy rv" data-delay=".15">An API can be ignored: a compromised agent could sign on its own. A guarded wallet closes that path. Funds sit in a Squads v4 multisig where nothing executes without a vote, and the agent has no vote.</p>
+
+      <div class="sub-label rv">Multisig members · threshold 1</div>
+      <div class="gcard scan rv" data-delay=".1"><div class="gcard-in">
+        <div class="srow"><div><div class="t">Owner</div><div class="d">approves anything, moves funds, removes the agent at any time</div></div><div class="w">all permissions</div></div>
+        <div class="srow"><div><div class="t">Agent</div><div class="d">proposes trades and runs the approved ones, cannot approve its own</div></div><div class="w">propose · execute</div></div>
+        <div class="srow"><div><div class="t">Sentinel</div><div class="d">approves what passes Scan and Bastion, cannot propose or move funds</div></div><div class="w">vote only</div></div>
+      </div></div>
+
+      <div class="grid2 rv" data-delay=".1" style="margin-top:20px">
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">01</span><span class="c-key">On-chain</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Enforced by Squads</div>
+          <div class="c-desc">The rule lives in the multisig program, not on our server. A transaction the agent pushes without Sentinel's vote is rejected on-chain.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">02</span><span class="c-key">Freeze</span><span class="c-dot rose"></span></div>
+          <div class="c-val">A freeze that holds</div>
+          <div class="c-desc">After a kill-switch verdict Sentinel stops voting for the wallet until the owner unfreezes it with a signed message.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">03</span><span class="c-key">Approvals</span><span class="c-dot teal"></span></div>
+          <div class="c-val">Owner in the loop</div>
+          <div class="c-desc">Trades that need the owner arrive in Telegram with a link to an approval page, signed with the owner's wallet.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">04</span><span class="c-key">Exit</span><span class="c-dot teal"></span></div>
+          <div class="c-val">No lock-in</div>
+          <div class="c-desc">The owner holds every permission and can withdraw or remove the agent without Sentinel's involvement.</div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ 07 · API ============ -->
+  <section class="sec side" id="api" data-p="2.35,2.4" data-side="1">
+    <div class="side-col pe">
+      <div class="label rv">[ 07 · API ]</div>
       <h2 class="h-display rv" data-delay=".1">Plug it in with one API call.</h2>
       <p class="body-copy rv" data-delay=".15">Swap your agent's direct signing for one request. Sentinel builds the transaction, checks it and returns either a transaction that is safe to sign or the reason it isn't.</p>
 
@@ -637,9 +677,9 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
   </section>
 
   <!-- ============ 07 · TRUST ============ -->
-  <section class="sec side" id="trust" data-p="2.35,2.5" data-side="1">
+  <section class="sec side" id="trust" data-p="2.4,2.5" data-side="-1">
     <div class="side-col pe">
-      <div class="label rv">[ 07 · Trust ]</div>
+      <div class="label rv">[ 08 · Trust ]</div>
       <h2 class="h-display rv" data-delay=".1">What keeps your wallet safe.</h2>
 
       <div class="stack rv" data-delay=".15" style="margin-top:48px">
@@ -649,28 +689,33 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
           <div class="c-desc">Sentinel never sees a private key. It returns unsigned transactions, and your agent signs only the ones that passed.</div>
         </div></div>
         <div class="gcard"><div class="gcard-in">
-          <div class="c-head"><span class="c-idx">02</span><span class="c-key">Explainable</span><span class="c-dot teal"></span></div>
+          <div class="c-head"><span class="c-idx">02</span><span class="c-key">Local check</span><span class="c-dot teal"></span></div>
+          <div class="c-val">You don't have to trust our server</div>
+          <div class="c-desc">Before signing, the SDK simulates the transaction on your own RPC and compares it with the intent: amount, token, recipient, no new delegates. A mismatch throws, and nothing is signed.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">03</span><span class="c-key">Fail closed</span><span class="c-dot teal"></span></div>
+          <div class="c-val">If Sentinel is down, nothing is signed</div>
+          <div class="c-desc">An error or a 30-second timeout means no signature. A guarded wallet cannot move funds without Sentinel's vote, and the owner keeps full control. The API allows 30 requests per minute per IP.</div>
+        </div></div>
+        <div class="gcard"><div class="gcard-in">
+          <div class="c-head"><span class="c-idx">04</span><span class="c-key">Explainable</span><span class="c-dot teal"></span></div>
           <div class="c-val">Every verdict is explained</div>
           <div class="c-desc">Each verdict lists its reasons and the rules version behind it, and is saved to the decision log.</div>
         </div></div>
         <div class="gcard"><div class="gcard-in">
-          <div class="c-head"><span class="c-idx">03</span><span class="c-key">Warn mode</span><span class="c-dot teal"></span></div>
+          <div class="c-head"><span class="c-idx">05</span><span class="c-key">Warn mode</span><span class="c-dot teal"></span></div>
           <div class="c-val">Start in warn mode</div>
           <div class="c-desc">Set <code>"mode": "warn"</code> to see every verdict without blocking anything. Switch to enforce when you're ready.</div>
-        </div></div>
-        <div class="gcard"><div class="gcard-in">
-          <div class="c-head"><span class="c-idx">04</span><span class="c-key">Real data</span><span class="c-dot teal"></span></div>
-          <div class="c-val">Live mainnet data</div>
-          <div class="c-desc">Scores and simulations use live Solana data at the moment of the request.</div>
         </div></div>
       </div>
     </div>
   </section>
 
-  <!-- ============ 08 · RELEASE ============ -->
+  <!-- ============ 09 · RELEASE ============ -->
   <section class="sec" id="release" data-p="3,3" data-side="0">
     <div class="rel-wrap pe">
-      <div class="label rv">[ 08 · Signed ]</div>
+      <div class="label rv">[ 09 · Signed ]</div>
       <h2 class="h-release rv" data-delay=".12">Checked.<br>Signed.</h2>
       <p class="body-copy rel-p rv" data-delay=".24">The transaction goes on-chain only after Scan, the simulation and the owner's policies have all passed.</p>
       <a href="#api" class="pill-cta rel-cta rv" data-delay=".32" data-nav>Connect your agent
@@ -698,6 +743,7 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
           <li><a href="#idea" data-nav>Live check<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
           <li><a href="#modules" data-nav>Scan<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
           <li><a href="#modules" data-nav>Bastion<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="#guard" data-nav>Guard<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
           <li><a href="#api" data-nav>API<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
         </ul></div>
         <div class="f-col"><h4>Ecosystem</h4><ul>
