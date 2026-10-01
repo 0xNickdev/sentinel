@@ -1,0 +1,8 @@
+.env
+.env.*
+.env.vercel
+*.log
+node_modules
+scripts
+sdk
+!.env.example
