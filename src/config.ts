@@ -20,7 +20,7 @@ export const config = {
   port: Number(process.env.PORT ?? 8787),
   host: process.env.HOST ?? '127.0.0.1',
   scanCacheTtlMs: Number(process.env.SCAN_CACHE_TTL_MS ?? 60_000),
-  rpcConcurrency: Number(process.env.RPC_CONCURRENCY ?? 6),
+  rpcConcurrency: Number(process.env.RPC_CONCURRENCY ?? 12),
 };
 
 export const heliusRpcUrl = () => `https://${currentCluster()}.helius-rpc.com/?api-key=${config.heliusApiKey}`;
