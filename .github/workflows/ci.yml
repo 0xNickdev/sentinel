@@ -1,0 +1,39 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            package-lock.json
+            sdk/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      # Built first: the verification scripts import the SDK from sdk/dist.
+      - name: Build SDK
+        working-directory: sdk
+        run: |
+          npm ci
+          npm run build
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Bundle serverless API
+        run: npm run build:vercel
