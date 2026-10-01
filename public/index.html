@@ -27,7 +27,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;500;600;700&family=Raleway:wght@400;500;600;700;900&display=swap" rel="stylesheet" />
 <script type="importmap">
-{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+{ "imports": { "three": "/vendor/three-0.160.0.module.js" } }
 </script>
 <style>
 :root{
@@ -58,24 +58,6 @@ svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-widt
   background:radial-gradient(circle at center,#ffffff 0%,#ecefff 35%,#c2d1ff 100%)}
 #stage{position:fixed;inset:0;z-index:0;pointer-events:none}
 #stage canvas{display:block;width:100%;height:100%;pointer-events:none}
-
-/* ---------- loader ---------- */
-#loader{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;
-  background:radial-gradient(circle at 50% 42%,#ffffff 0%,#eef2ff 45%,#dbe4ff 100%);
-  transition:opacity .55s cubic-bezier(0.65,0,0.35,1)}
-#loader.leaving{opacity:0;pointer-events:none}
-.ld-col{display:flex;flex-direction:column;align-items:center;gap:26px}
-.ld-el{opacity:0;transform:translateY(18px);filter:blur(6px);
-  transition:opacity .9s cubic-bezier(0.34,1.25,0.64,1),transform .9s cubic-bezier(0.34,1.25,0.64,1),filter .9s ease}
-#loader.in .ld-el{opacity:1;transform:none;filter:blur(0)}
-#loader.in .ld-el:nth-child(1){transition-delay:.1s}
-#loader.in .ld-el:nth-child(2){transition-delay:.26s}
-#loader.in .ld-el:nth-child(3){transition-delay:.42s}
-.ld-status{font-family:var(--font-mono);font-size:10px;letter-spacing:.28em;text-transform:uppercase;color:#6b7bb5}
-.ld-track{width:clamp(180px,32vw,280px);height:2px;background:rgba(14,42,197,0.14);border-radius:99px;overflow:visible}
-.ld-fill{height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#5175ff 0%,#0e2ac5 100%);
-  box-shadow:0 0 14px rgba(47,105,255,0.55);transition:width .45s var(--ease)}
-.ld-count{font-family:var(--font-mono);font-size:11px;letter-spacing:.1em;color:#0e2ac5;font-weight:700;font-variant-numeric:tabular-nums}
 
 /* ---------- header ---------- */
 header{position:fixed;top:0;left:0;right:0;z-index:30;height:80px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;
@@ -130,9 +112,9 @@ strong.hl{color:var(--ok);font-weight:700}
 .code-chip{font-family:var(--font-mono);font-size:.82em;padding:2px 9px;border-radius:8px;border:1px solid rgba(10,10,10,.14);background:rgba(255,255,255,.45);color:var(--n950);white-space:nowrap}
 
 /* Reveal */
-.rv{opacity:0;transform:translateY(42px);filter:blur(8px);
-  transition:opacity 1.5s var(--ease),transform 1.5s var(--ease),filter 1.5s var(--ease)}
-.rv.on{opacity:1;transform:none;filter:blur(0)}
+.rv{opacity:0;transform:translateY(16px);transition:opacity .7s var(--ease),transform .7s var(--ease)}
+.rv.on{opacity:1;transform:none}
+@media (prefers-reduced-motion:reduce){.rv{opacity:1;transform:none;transition:none}}
 
 /* ---------- HERO ---------- */
 #hero{display:flex;align-items:flex-end;padding-bottom:48px}
@@ -328,32 +310,6 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
 .socials a:hover{color:#fff;border-color:rgba(255,255,255,.35)}
 .f-disc{font-family:var(--font-mono);font-size:10px;letter-spacing:.06em;color:rgba(255,255,255,.3);margin-top:10px;width:100%}
 
-/* ---------- drawer ---------- */
-#scrim{position:fixed;inset:0;z-index:40;background:rgba(10,10,10,.2);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);opacity:0;pointer-events:none;transition:opacity .45s ease}
-#scrim.open{opacity:.4;pointer-events:auto}
-#drawer{position:fixed;top:0;right:0;bottom:0;z-index:50;width:100%;background:rgba(255,255,255,.95);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
-  border-left:1px solid var(--n100);padding:32px;display:flex;flex-direction:column;overflow-y:auto;
-  transform:translateX(100%);transition:transform .6s cubic-bezier(0.32,0.72,0,1)}
-#drawer.open{transform:none}
-@media (min-width:640px){#drawer{width:420px}}
-.dr-head{display:flex;justify-content:space-between;align-items:center}
-.dr-title{display:flex;align-items:center;gap:10px;font-family:var(--font-display);font-weight:900;font-size:14px;letter-spacing:.2em;text-transform:uppercase}
-.dr-close{width:36px;height:36px;border-radius:99px;display:flex;align-items:center;justify-content:center;border:1px solid #e5e5e5;transition:background .3s}
-.dr-close:hover{background:var(--n100)}
-.dr-note{font-family:var(--font-mono);font-size:12px;font-style:italic;color:var(--n400);line-height:1.6;margin:24px 0 0}
-.dr-sec{display:flex;align-items:center;gap:8px;font-family:var(--font-mono);font-size:10px;letter-spacing:.2em;font-weight:700;text-transform:uppercase;margin:36px 0 14px}
-.themes{display:flex;flex-direction:column;gap:10px}
-.theme{text-align:left;border-radius:12px;border:1px solid #e5e5e5;padding:16px;transition:all .35s var(--ease)}
-.theme:hover{border-color:#d4d4d4}
-.theme.sel{background:var(--n950);color:#fff;border-color:var(--n950);transform:scale(1.02)}
-.theme .tt{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:12px}
-.theme .sw{width:12px;height:12px;border-radius:99px}
-.theme p{margin:6px 0 0;font-size:10px;line-height:1.5;opacity:.65}
-.dr-foot{margin-top:auto;padding-top:36px}
-.dr-row{display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:9px;color:var(--n400);letter-spacing:.1em;padding:6px 0;border-top:1px solid var(--n100)}
-.dr-reset{margin-top:16px;width:100%;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px;border:1px solid #e5e5e5;font-size:12px;font-weight:600;transition:background .3s}
-.dr-reset:hover{background:var(--n100)}
-
 @media (prefers-reduced-motion:reduce){.mq-track{animation-duration:80s}}
 </style>
 </head>
@@ -361,15 +317,6 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
 
 <div id="bg"></div>
 <div id="stage"><canvas></canvas></div>
-
-<!-- ============ LOADER ============ -->
-<div id="loader" aria-live="polite">
-  <div class="ld-col">
-    <div class="ld-el ld-status" id="ldStatus">Calibrating gateway</div>
-    <div class="ld-el ld-track"><div class="ld-fill" id="ldFill"></div></div>
-    <div class="ld-el ld-count" id="ldCount">000%</div>
-  </div>
-</div>
 
 <!-- ============ HEADER ============ -->
 <header>
@@ -381,11 +328,9 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
     <a href="#guard" data-nav>Guard</a>
     <a href="#api" data-nav>API</a>
     <a href="#trust" data-nav>Trust</a>
+    <a href="/docs">Docs</a>
   </nav>
   <div class="hdr-right">
-    <button class="icon-btn" id="openDrawer" aria-label="Studio Controls">
-      <svg class="i" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>
-    </button>
     <a href="#api" class="pill-cta" data-nav>Get started
       <span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
     </a>
@@ -414,7 +359,6 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
       <div class="col7 pe">
         <div class="label rv">[ 02 · Problem ]</div>
         <h2 class="h-display rv" data-delay=".1">When agents<br>sign blind.</h2>
-        <p class="body-copy rv" data-delay=".2" style="max-width:32rem">Keep scrolling and the spheres fall. Each one is a transaction that nobody checked.</p>
       </div>
       <div class="col5 pe rv" data-delay=".25">
         <div class="stack">
@@ -448,9 +392,8 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
     <div class="side-col pe">
       <div class="label rv">[ 03 · Idea ]</div>
       <h2 class="h-display rv" data-delay=".1">Two checks, one gateway.</h2>
-      <p class="body-copy rv" data-delay=".15">Two checks in one gateway. <strong class="hl">Scan</strong> decides whether a token can be trusted. <strong class="hl">Bastion</strong> decides whether a transaction is safe to sign. Together they cover everything from the agent's decision to the money in the wallet.</p>
+      <p class="body-copy rv" data-delay=".15"><strong class="hl">Scan</strong> decides whether a token can be trusted. <strong class="hl">Bastion</strong> decides whether a transaction is safe to sign. Together they cover everything from the agent's decision to the money in the wallet.</p>
       <p class="body-copy rv" data-delay=".2" style="margin-top:18px">The agent calls one function, <span class="code-chip">sentinel.execute(intent)</span>, instead of signing directly. Everything else happens inside the gateway.</p>
-      <div class="swipe-pill rv" data-delay=".28"><svg class="i" viewBox="0 0 24 24"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>Move your cursor through the shield</div>
 
       <div class="rv" data-delay=".1">
         <div class="scen" id="scen">
@@ -648,7 +591,7 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
 );
 <span class="c">// signs and sends only when res.decision is "allow"</span></pre>
 
-      <a class="swipe-pill rv" href="https://github.com/0xNickdev/sentinel" target="_blank" rel="noopener" style="margin-top:20px;text-decoration:none"><svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>Source on GitHub</a>
+      <div class="rv" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:20px"><a class="swipe-pill" href="/docs" style="margin-top:0;text-decoration:none"><svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>API reference</a><a class="swipe-pill" href="https://github.com/0xNickdev/sentinel" target="_blank" rel="noopener" style="margin-top:0;text-decoration:none"><svg class="i" style="width:14px;height:14px" viewBox="0 0 24 24"><path d="M15 22v-4a4.8 4.8 0 0 0-1-3.5c3 0 6-2 6-5.5.08-1.25-.27-2.48-1-3.5.28-1.15.28-2.35 0-3.5 0 0-1 0-3 1.5-2.64-.5-5.36-.5-8 0C6 2 5 2 5 2c-.3 1.15-.3 2.35 0 3.5A5.403 5.403 0 0 0 4 9c0 3.5 3 5.5 6 5.5-.39.49-.68 1.05-.85 1.65-.17.6-.22 1.23-.15 1.85v4"/><path d="M9 18c-4.51 2-5-2-7-2"/></svg>Source on GitHub</a></div>
 
       <div class="sub-label rv">Endpoints</div>
       <div class="grid2 rv" data-delay=".1">
@@ -753,8 +696,9 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
         </ul></div>
         <div class="f-col"><h4>Resources</h4><ul>
           <li><a href="#flow" data-nav>How it works<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
-          <li><a href="#modules" data-nav>Scoring rules<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="/docs#scoring">Scoring rules<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
           <li><a href="#trust" data-nav>Trust<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
+          <li><a href="/docs">Docs<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
           <li><a href="https://github.com/0xNickdev/sentinel" target="_blank" rel="noopener">GitHub<svg class="i" viewBox="0 0 24 24"><path d="M7 7h10v10"/><path d="M7 17 17 7"/></svg></a></li>
         </ul></div>
       </div>
@@ -772,22 +716,12 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
 </footer>
 
 <!-- ============ STUDIO CONTROLS ============ -->
-<div id="scrim"></div>
-<aside id="drawer" aria-label="Studio Controls">
-  <div class="dr-head">
-    <div class="dr-title"><svg class="i" viewBox="0 0 24 24"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg>Scene settings</div>
-    <button class="dr-close" id="closeDrawer" aria-label="Close"><svg class="i" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
-  </div>
-  <p class="dr-note">Set the hero sphere palette. As you scroll, the scene turns rose when the field collapses and teal when the shield assembles.</p>
-  <div class="dr-sec"><svg class="i" viewBox="0 0 24 24" style="width:12px;height:12px"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>Sphere palette</div>
-  <div class="themes" id="themes"></div>
-  <div class="dr-foot">
-    <div class="dr-row"><span>RENDER ENGINE</span><span>THREE.JS WEBGL</span></div>
-    <div class="dr-row"><span>DYNAMICS SOLVER</span><span>3D COLLISION VERLET</span></div>
-    <button class="dr-reset" id="resetTheme"><svg class="i" viewBox="0 0 24 24" style="width:14px;height:14px"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Reset defaults</button>
-  </div>
-</aside>
 
+
+<script>
+// Show the content on the first frame; the 3D scene loads separately and never holds the page.
+requestAnimationFrame(() => document.body.classList.add('revealed'));
+</script>
 <script type="module">
 import * as THREE from 'three';
 
@@ -831,7 +765,6 @@ const applyBg = () => { bgEl.style.background = bgStage === 0 ? theme.bg : STAGE
 /* =========================================================
    Smooth scroll (Lenis-style)
    ========================================================= */
-const drawer = document.getElementById('drawer');
 const smooth = (() => {
   const LERP = 0.09, WHEEL = 1;
   let target = window.scrollY, current = window.scrollY, animating = false;
@@ -845,7 +778,7 @@ const smooth = (() => {
   };
   const start = () => { if (!animating) { animating = true; current = window.scrollY; requestAnimationFrame(step); } };
   window.addEventListener('wheel', e => {
-    if (e.ctrlKey || drawer.contains(e.target)) return;
+    if (e.ctrlKey) return;
     e.preventDefault();
     const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? window.innerHeight : 1;
     target = clampT(target + e.deltaY * unit * WHEEL);
@@ -926,8 +859,8 @@ computeAnchors(); onScroll();
 const revealIO = new IntersectionObserver(entries => {
   for (const en of entries) {
     if (!en.isIntersecting) continue;
-    const big = en.intersectionRect.height >= window.innerHeight * 0.35;
-    if (en.intersectionRatio >= 0.45 || big) {
+    const big = en.intersectionRect.height >= window.innerHeight * 0.12;
+    if (en.intersectionRatio >= 0.15 || big) {
       const el = en.target;
       el.style.transitionDelay = (el.dataset.delay || 0) + 's';
       el.classList.add('on');
@@ -1039,72 +972,12 @@ caForm.addEventListener('submit', async (e) => {
   }
 });
 
-/* =========================================================
-   Studio Controls drawer
-   ========================================================= */
-const scrim = document.getElementById('scrim');
-const openDrawer = () => { drawer.classList.add('open'); scrim.classList.add('open'); };
-const closeDrawer = () => { drawer.classList.remove('open'); scrim.classList.remove('open'); };
-document.getElementById('openDrawer').addEventListener('click', openDrawer);
-document.getElementById('closeDrawer').addEventListener('click', closeDrawer);
-scrim.addEventListener('click', closeDrawer);
-window.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
-
-const themesEl = document.getElementById('themes');
-const renderThemes = () => {
-  themesEl.innerHTML = THEMES.map(t => `
-    <button class="theme ${t.id === theme.id ? 'sel' : ''}" data-id="${t.id}">
-      <div class="tt"><span>${t.name}</span><span class="sw" style="background:${t.primary}"></span></div>
-      <p>${t.desc}</p>
-    </button>`).join('');
-  themesEl.querySelectorAll('.theme').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.id)));
-};
-const setTheme = (id) => {
-  const next = THEMES.find(t => t.id === id) || THEMES[0];
-  if (next.id === theme.id) return;
-  theme = next;
-  renderThemes();
-  applyBg();
-  mountScene(theme.ball);
-};
-document.getElementById('resetTheme').addEventListener('click', () => setTheme('roseGold'));
-renderThemes();
 applyBg();
 
 /* =========================================================
-   Loader
+   Reveal: content shows at once; the sphere field starts when WebGL is ready.
    ========================================================= */
-const loader = (() => {
-  const el = document.getElementById('loader');
-  const fill = document.getElementById('ldFill');
-  const count = document.getElementById('ldCount');
-  const status = document.getElementById('ldStatus');
-  let value = 0, ready = false, finished = false, last = performance.now();
-  requestAnimationFrame(() => el.classList.add('in'));
-  const tick = (now) => {
-    const dt = Math.min(0.05, (now - last) / 1000); last = now;
-    if (!ready) value += (92 - value) * 1.7 * dt;
-    else { value += (100 - value) * 6 * dt; if (value >= 99.4) value = 100; }
-    fill.style.width = value + '%';
-    count.textContent = String(Math.floor(value)).padStart(3, '0') + '%';
-    status.textContent = value >= 100 ? 'Gateway online' : 'Calibrating gateway';
-    if (value >= 99.9 && ready && !finished) {
-      finished = true;
-      setTimeout(() => el.classList.add('leaving'), 140);
-      setTimeout(() => { el.style.display = 'none'; onDone(); }, 140 + 520);
-      return;
-    }
-    requestAnimationFrame(tick);
-  };
-  requestAnimationFrame(tick);
-  // Safety net: never trap the page behind the loader on a slow / missing GPU.
-  setTimeout(() => { ready = true; }, 9000);
-  const onDone = () => {
-    control.started = true;
-    document.body.classList.add('revealed');
-  };
-  return { setReady() { ready = true; } };
-})();
+control.started = true;
 
 /* =========================================================
    WebGL gravity field
@@ -1592,7 +1465,6 @@ function createGravityScene({ canvas, container, ballColor, onReady }) {
 /* mount / re-key on palette change */
 const stageEl = document.getElementById('stage');
 let current = null;
-let firstReady = false;
 function mountScene(ballColor) {
   if (current) { current.dispose(); current = null; }
   const old = stageEl.querySelector('canvas');
@@ -1601,14 +1473,15 @@ function mountScene(ballColor) {
   try {
     current = createGravityScene({
       canvas, container: stageEl, ballColor,
-      onReady: () => { if (!firstReady) { firstReady = true; loader.setReady(); } },
+      onReady: () => {},
     });
   } catch (err) {
     console.error('WebGL scene failed to start', err);
-    loader.setReady();
   }
 }
-mountScene(theme.ball);
+// Content first: build the WebGL scene after the first paint so a slow GPU never holds the page.
+// Two frames: the second callback runs only after the first frame with the content has been painted.
+requestAnimationFrame(() => requestAnimationFrame(() => setTimeout(() => mountScene(theme.ball), 0)));
 </script>
 </body>
 </html>
