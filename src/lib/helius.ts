@@ -1,9 +1,11 @@
 import { config, heliusApiUrl, heliusRpcUrl } from '../config.js';
 import { fetchJson, Semaphore } from './http.js';
+import { countHelius } from './usage.js';
 
 const gate = new Semaphore(config.rpcConcurrency);
 
 export async function rpc<T>(method: string, params: unknown, timeoutMs = 8000): Promise<T> {
+  countHelius();
   const body = await fetchJson<{ result?: T; error?: { code: number; message: string } }>(heliusRpcUrl(), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -67,6 +69,7 @@ export async function parseTransactions(signatures: string[]): Promise<EnhancedT
   const out: EnhancedTx[] = [];
   for (let i = 0; i < signatures.length; i += 100) {
     const chunk = signatures.slice(i, i + 100);
+    countHelius();
     const res = await fetchJson<EnhancedTx[]>(heliusApiUrl('/v0/transactions'), {
       method: 'POST',
       headers: { 'content-type': 'application/json' },

@@ -1,6 +1,7 @@
 import { heliusApiUrl } from '../config.js';
 import { fetchJson } from '../lib/http.js';
 import type { EnhancedTx } from '../lib/helius.js';
+import { countHelius } from '../lib/usage.js';
 
 export interface WalletActivity {
   /** SOL that left the wallet in the last 24h (native transfers, incl. swap legs). */
@@ -17,6 +18,7 @@ export interface WalletActivity {
  * across restarts and serverless instances.
  */
 export async function walletActivity(wallet: string): Promise<WalletActivity> {
+  countHelius();
   const txs = await fetchJson<EnhancedTx[]>(heliusApiUrl(`/v0/addresses/${wallet}/transactions?limit=100`), {
     timeoutMs: 8000,
     label: 'helius address history',

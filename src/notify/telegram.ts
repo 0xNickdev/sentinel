@@ -2,6 +2,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { currentCluster, withCluster, type Cluster } from '../lib/cluster.js';
 import { chatsFor, subscribe, unsubscribeChat, walletsForChat } from '../lib/db.js';
 import { fetchJson } from '../lib/http.js';
+import { setUsageTool } from '../lib/usage.js';
 import { scanToken } from '../scan/index.js';
 
 /**
@@ -118,6 +119,7 @@ export async function handleUpdate(update: Update, linkWallet: (ms: string, clus
   const chat = msg.chat.id;
   const [cmd, ...args] = msg.text.trim().split(/\s+/);
   const arg = args[0] ?? '';
+  setUsageTool(`telegram:${cmd.startsWith('/') ? cmd.slice(1) : 'check'}`);
 
   if (cmd === '/start' && arg) {
     const [ms, flag] = arg.split('_');

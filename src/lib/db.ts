@@ -36,6 +36,9 @@ async function migrate(sql: NeonQueryFunction<false, false>) {
   await sql`CREATE TABLE IF NOT EXISTS tg_subscriptions (
     multisig text NOT NULL, cluster text NOT NULL, chat_id bigint NOT NULL, created_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (multisig, cluster, chat_id))`;
+  await sql`CREATE TABLE IF NOT EXISTS usage_daily (
+    day date NOT NULL, channel text NOT NULL, tool text NOT NULL, calls int NOT NULL DEFAULT 0, errors int NOT NULL DEFAULT 0,
+    helius int NOT NULL DEFAULT 0, ms_total bigint NOT NULL DEFAULT 0, PRIMARY KEY (day, channel, tool))`;
   await sql`CREATE TABLE IF NOT EXISTS freezes (
     multisig text NOT NULL, cluster text NOT NULL, reason text NOT NULL, frozen_at timestamptz NOT NULL DEFAULT now(),
     PRIMARY KEY (multisig, cluster))`;
@@ -183,4 +186,22 @@ export async function freezeClear(multisig: string, cluster: string) {
   const sql = await db();
   if (!sql) return void memFreezes.delete(`${multisig}|${cluster}`);
   await sql`DELETE FROM freezes WHERE multisig = ${multisig} AND cluster = ${cluster}`;
+}
+
+// ---------------------------------------------------------------- usage metrics (daily counters)
+
+export async function usageRecord(e: { channel: string; tool: string; error: boolean; helius: number; ms: number }) {
+  const sql = await db();
+  if (!sql) return;
+  await sql`INSERT INTO usage_daily (day, channel, tool, calls, errors, helius, ms_total)
+    VALUES (current_date, ${e.channel}, ${e.tool}, 1, ${e.error ? 1 : 0}, ${e.helius}, ${Math.round(e.ms)})
+    ON CONFLICT (day, channel, tool) DO UPDATE SET calls = usage_daily.calls + 1, errors = usage_daily.errors + EXCLUDED.errors,
+      helius = usage_daily.helius + EXCLUDED.helius, ms_total = usage_daily.ms_total + EXCLUDED.ms_total`;
+}
+
+export async function usageReport(days: number) {
+  const sql = await db();
+  if (!sql) return [];
+  return sql`SELECT day::text, channel, tool, calls, errors, helius, ms_total FROM usage_daily
+    WHERE day > current_date - ${days}::int ORDER BY day DESC, calls DESC`;
 }

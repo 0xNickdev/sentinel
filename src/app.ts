@@ -13,7 +13,8 @@ import { unfreezeMessage, unfreezeWallet } from './guard/freeze.js';
 import { guardExecuteAndReport } from './guard/service.js';
 import { currentCluster, parseCluster, withCluster } from './lib/cluster.js';
 import { handleUpdate, send, telegramEnabled, webhookAuthorized } from './notify/telegram.js';
-import { chatsFor, dbEnabled, rateLimitHit } from './lib/db.js';
+import { chatsFor, dbEnabled, rateLimitHit, usageRecord } from './lib/db.js';
+import { enterUsage, setUsageTool, type UsageContext } from './lib/usage.js';
 import { createMcpServer } from './mcp/server.js';
 import { RULES_VERSION, scanToken } from './scan/index.js';
 import { ScanInputError } from './scan/types.js';
@@ -42,6 +43,27 @@ function sendError(req: FastifyRequest, reply: FastifyReply, e: unknown) {
 export async function buildApp() {
   const app = Fastify({ logger: { level: process.env.LOG_LEVEL ?? 'info' }, bodyLimit: 256 * 1024, trustProxy: true });
   await app.register(cors, { origin: true });
+
+  // Usage metrics: one counter row per request (channel, tool, errors, latency, Helius calls).
+  const UNTRACKED = new Set(['/api/health', '/api/policy/default']);
+  app.addHook('onRequest', (req, _reply, done) => {
+    const path = req.url.split('?')[0];
+    if (!path.startsWith('/api/') || UNTRACKED.has(path)) return done();
+    const channel = path.startsWith('/api/mcp') ? 'mcp' : path.startsWith('/api/telegram') ? 'telegram' : /Mozilla/.test(String(req.headers['user-agent'])) ? 'web' : 'api';
+    const ctx: UsageContext = { channel, tool: req.routeOptions.url ?? path, helius: 0, started: Date.now() };
+    (req as FastifyRequest & { usage?: UsageContext }).usage = ctx;
+    enterUsage(ctx);
+    done();
+  });
+  const flushUsage = (req: FastifyRequest, status: number) => {
+    const ctx = (req as FastifyRequest & { usage?: UsageContext }).usage;
+    if (!ctx) return Promise.resolve();
+    return usageRecord({ channel: ctx.channel, tool: ctx.tool, error: status >= 500, helius: ctx.helius, ms: Date.now() - ctx.started }).catch(() => {});
+  };
+  app.addHook('onResponse', async (req, reply) => {
+    if (!reply.sent || req.url.startsWith('/api/mcp')) return; // MCP replies are hijacked and flushed by the route
+    await flushUsage(req, reply.statusCode);
+  });
 
   app.get('/api/health', async () => ({
     ok: config.heliusConfigured,
@@ -148,10 +170,13 @@ export async function buildApp() {
   // MCP (Streamable HTTP, stateless): a fresh server + transport per request, which suits serverless.
   app.post('/api/mcp', async (req, reply) => {
     if (await rateLimited(req, reply)) return;
+    const rpc = req.body as { method?: string; params?: { name?: string } } | undefined;
+    setUsageTool(rpc?.method === 'tools/call' ? `mcp:${rpc.params?.name}` : `mcp:${rpc?.method ?? 'unknown'}`);
     const server = createMcpServer();
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     reply.hijack();
     reply.raw.on('close', () => {
+      void flushUsage(req, reply.raw.statusCode);
       void transport.close();
       void server.close();
     });
