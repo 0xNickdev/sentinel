@@ -20,7 +20,7 @@ Sentinel checks the token, simulates the transaction and applies the owner's pol
 [![ClawPump](https://img.shields.io/badge/ecosystem-ClawPump-E0334F?style=flat-square)](https://clawpump.tech)
 [![X](https://img.shields.io/badge/X-@Sent1nelAgency-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/Sent1nelAgency)
 
-[Website](https://www.santinelguard.online) · [X](https://x.com/Sent1nelAgency) · [Quickstart](#quickstart) · [API](#api-reference) · [Architecture](docs/ARCHITECTURE.md) · [Security](SECURITY.md)
+[Website](https://www.santinelguard.online) · [X](https://x.com/Sent1nelAgency) · [Telegram bot](https://t.me/santinelguard_bot) · [Quickstart](#quickstart) · [API](#api-reference) · [Architecture](docs/ARCHITECTURE.md) · [Security](SECURITY.md)
 
 </div>
 
