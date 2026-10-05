@@ -144,7 +144,7 @@ export class Sentinel {
   private timeoutMs: number;
 
   constructor(opts: SentinelOptions = {}) {
-    this.baseUrl = (opts.baseUrl ?? 'https://sentinel-clawpump.vercel.app').replace(/\/$/, '');
+    this.baseUrl = (opts.baseUrl ?? 'https://www.santinelguard.online').replace(/\/$/, '');
     this.cluster = opts.cluster ?? 'mainnet';
     this.policy = opts.policy;
     this.fetchImpl = opts.fetch ?? fetch;

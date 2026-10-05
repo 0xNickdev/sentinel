@@ -88,7 +88,7 @@ async function loadMultisig(ms: PublicKey) {
 
 const has = (mask: number, p: number) => (mask & p) === p;
 
-const PUBLIC_URL = process.env.PUBLIC_URL ?? 'https://sentinel-clawpump.vercel.app';
+const PUBLIC_URL = process.env.PUBLIC_URL ?? 'https://www.santinelguard.online';
 
 /** Page where the owner reviews and approves a proposal Sentinel would not approve on its own. */
 export const approvalUrl = (ms: string, index: number) =>

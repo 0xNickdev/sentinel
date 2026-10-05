@@ -9,15 +9,16 @@
 <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 <meta name="theme-color" content="#0E2AC5" />
-<link rel="canonical" href="https://sentinel-clawpump.vercel.app/docs" />
+<link rel="canonical" href="https://www.santinelguard.online/docs" />
 <meta property="og:type" content="website" />
 <meta property="og:site_name" content="Sentinel" />
-<meta property="og:url" content="https://sentinel-clawpump.vercel.app/docs" />
+<meta property="og:url" content="https://www.santinelguard.online/docs" />
 <meta property="og:title" content="Sentinel Docs" />
 <meta property="og:description" content="API, SDK and MCP reference for the Sentinel security gateway on Solana." />
-<meta property="og:image" content="https://sentinel-clawpump.vercel.app/og.png" />
+<meta property="og:image" content="https://www.santinelguard.online/og.png" />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:image" content="https://sentinel-clawpump.vercel.app/og.png" />
+<meta name="twitter:site" content="@Sent1nelAgency" />
+<meta name="twitter:image" content="https://www.santinelguard.online/og.png" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@400;500;700&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -97,6 +98,7 @@ footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font
   <div class="top-links">
     <a href="/">Home</a>
     <a href="https://github.com/0xNickdev/sentinel">GitHub</a>
+    <a href="https://x.com/Sent1nelAgency">X</a>
   </div>
 </header>
 
@@ -132,7 +134,7 @@ footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font
     <h2 id="overview">Overview</h2>
     <div class="tbl"><table>
       <tr><th>Item</th><th>Value</th></tr>
-      <tr><td>Base URL</td><td><code>https://sentinel-clawpump.vercel.app</code></td></tr>
+      <tr><td>Base URL</td><td><code>https://www.santinelguard.online</code></td></tr>
       <tr><td>Format</td><td>JSON over HTTPS. Transactions are base64-encoded serialized <code>VersionedTransaction</code>s.</td></tr>
       <tr><td>Auth</td><td>None. The hosted API is free and open, CORS allows any origin.</td></tr>
       <tr><td>Rate limit</td><td>30 requests per minute per IP on scan, execute, check, guard and MCP. Over the limit: <code>429</code> with <code>retry-after</code>.</td></tr>
@@ -142,7 +144,7 @@ footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font
 
     <h2 id="quickstart">Quickstart</h2>
     <p>Replace direct signing with one request. Sign only when <code>decision</code> is <code>allow</code>.</p>
-<pre>curl -X POST https://sentinel-clawpump.vercel.app/api/execute \
+<pre>curl -X POST https://www.santinelguard.online/api/execute \
   -H 'content-type: application/json' \
   -d '{
   <span class="k">"intent"</span>: { <span class="k">"type"</span>: <span class="s">"buy"</span>, <span class="k">"wallet"</span>: <span class="s">"&lt;agent wallet&gt;"</span>, <span class="k">"mint"</span>: <span class="s">"&lt;token CA&gt;"</span>, <span class="k">"sol"</span>: <span class="n">0.5</span> },
@@ -398,7 +400,7 @@ footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font
 
     <h2 id="mcp">MCP server</h2>
     <p>Streamable HTTP, stateless. Add it to your agent as a custom connector:</p>
-<pre>https://sentinel-clawpump.vercel.app/api/mcp</pre>
+<pre>https://www.santinelguard.online/api/mcp</pre>
     <div class="tbl"><table>
       <tr><th>Tool</th><th>Same as</th></tr>
       <tr><td><code>scan_token</code></td><td><code>GET /api/scan/:mint</code></td></tr>

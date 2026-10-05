@@ -10,7 +10,7 @@ import { getSignatures, parseTransactions } from '../src/lib/helius.js';
 import { dexSearch, type DexPair } from '../src/lib/market.js';
 import { PUMP_PROGRAM, TRUSTED_MINTS } from '../src/lib/programs.js';
 
-const API = process.env.API ?? 'https://sentinel-clawpump.vercel.app';
+const API = process.env.API ?? 'https://www.santinelguard.online';
 const PER_SET = 15;
 const TICKERS = ['POPCAT', 'MEW', 'BOME', 'PNUT', 'GOAT', 'MOODENG', 'FARTCOIN', 'GIGA', 'MICHI', 'WEN', 'SLERF', 'PENGU', 'AI16Z', 'ZEREBRO', 'GRIFFAIN', 'CHILLGUY', 'PONKE', 'MYRO', 'FWOG', 'USELESS'];
 

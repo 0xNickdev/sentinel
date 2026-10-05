@@ -7,7 +7,7 @@ import { Sentinel } from '../sdk/dist/index.js';
 const conn = new Connection(`https://devnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`, 'confirmed');
 const owner = Keypair.fromSecretKey(bs58.decode(process.env.OWNER_SECRET!));
 const agent = Keypair.generate();
-const sentinel = new Sentinel({ baseUrl: process.env.API ?? 'https://sentinel-clawpump.vercel.app', cluster: 'devnet', policy: { limits: { per_tx_sol: 0.03 }, recipients: [owner.publicKey.toBase58()] } });
+const sentinel = new Sentinel({ baseUrl: process.env.API ?? 'https://www.santinelguard.online', cluster: 'devnet', policy: { limits: { per_tx_sol: 0.03 }, recipients: [owner.publicKey.toBase58()] } });
 
 await conn.confirmTransaction(await conn.sendTransaction(new Transaction().add(SystemProgram.transfer({ fromPubkey: owner.publicKey, toPubkey: agent.publicKey, lamports: 0.01 * LAMPORTS_PER_SOL })), [owner]), 'confirmed');
 const setup = await sentinel.guard.setup({ owner: owner.publicKey.toBase58(), agent: agent.publicKey.toBase58(), fundSol: 0.06 });

@@ -8,7 +8,7 @@
 
 Sentinel checks the token, simulates the transaction and applies the owner's policy before anything is signed. On a guarded wallet the rules are enforced on-chain: the agent cannot move funds without Sentinel's vote.
 
-[![Live](https://img.shields.io/badge/live-sentinel--clawpump.vercel.app-0E2AC5?style=flat-square)](https://sentinel-clawpump.vercel.app)
+[![Live](https://img.shields.io/badge/live-santinelguard.online-0E2AC5?style=flat-square)](https://www.santinelguard.online)
 [![npm](https://img.shields.io/npm/v/clawpump-sentinel?style=flat-square&color=0E2AC5&label=clawpump-sentinel)](https://www.npmjs.com/package/clawpump-sentinel)
 [![CI](https://img.shields.io/github/actions/workflow/status/0xNickdev/sentinel/ci.yml?branch=main&style=flat-square&label=ci)](https://github.com/0xNickdev/sentinel/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-0C9C88?style=flat-square)](LICENSE)
@@ -18,8 +18,9 @@ Sentinel checks the token, simulates the transaction and applies the owner's pol
 [![MCP](https://img.shields.io/badge/MCP-8%20tools-6B4FBB?style=flat-square)](#model-context-protocol)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square&logo=typescript&logoColor=white)](tsconfig.json)
 [![ClawPump](https://img.shields.io/badge/ecosystem-ClawPump-E0334F?style=flat-square)](https://clawpump.tech)
+[![X](https://img.shields.io/badge/X-@Sent1nelAgency-000000?style=flat-square&logo=x&logoColor=white)](https://x.com/Sent1nelAgency)
 
-[Website](https://sentinel-clawpump.vercel.app) · [Quickstart](#quickstart) · [API](#api-reference) · [Architecture](docs/ARCHITECTURE.md) · [Security](SECURITY.md)
+[Website](https://www.santinelguard.online) · [X](https://x.com/Sent1nelAgency) · [Quickstart](#quickstart) · [API](#api-reference) · [Architecture](docs/ARCHITECTURE.md) · [Security](SECURITY.md)
 
 </div>
 
@@ -149,7 +150,7 @@ In `warn` mode the same analysis runs and the decision is returned as a recommen
 Add the server as a custom connector in Claude, Cursor or any MCP client:
 
 ```
-https://sentinel-clawpump.vercel.app/api/mcp
+https://www.santinelguard.online/api/mcp
 ```
 
 | Tool | Purpose |
@@ -193,7 +194,7 @@ run.approvalUrl;  // set when the owner must approve
 ### REST
 
 ```bash
-curl -X POST https://sentinel-clawpump.vercel.app/api/execute \
+curl -X POST https://www.santinelguard.online/api/execute \
   -H 'content-type: application/json' \
   -d '{
     "intent": { "type": "buy", "wallet": "<agent wallet>", "mint": "<token CA>", "sol": 0.5 },
@@ -220,7 +221,7 @@ Every field is optional and merged over these defaults (`GET /api/policy/default
 
 ## API reference
 
-Base URL: `https://sentinel-clawpump.vercel.app`
+Base URL: `https://www.santinelguard.online`
 
 | Method | Endpoint | Description |
 |---|---|---|

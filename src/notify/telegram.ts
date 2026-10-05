@@ -10,7 +10,7 @@ import { scanToken } from '../scan/index.js';
  * Every button opens a Sentinel page where the owner signs with their own wallet; the bot never holds keys.
  */
 
-const PUBLIC_URL = process.env.PUBLIC_URL ?? 'https://sentinel-clawpump.vercel.app';
+const PUBLIC_URL = process.env.PUBLIC_URL ?? 'https://www.santinelguard.online';
 const token = () => process.env.TELEGRAM_BOT_TOKEN;
 export const telegramEnabled = () => !!token();
 

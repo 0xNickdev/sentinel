@@ -86,6 +86,8 @@ await sentinel.guard.status(multisig);           // members, balance, frozen?
 await sentinel.journal({ wallet });              // decision log
 ```
 
-Prefer MCP? Connect `https://sentinel-clawpump.vercel.app/api/mcp` as a custom connector.
+Prefer MCP? Connect `https://www.santinelguard.online/api/mcp` as a custom connector.
+
+Docs: https://www.santinelguard.online/docs · Updates: [@Sent1nelAgency](https://x.com/Sent1nelAgency)
 
 Scores and decisions are risk indicators, not financial advice.
