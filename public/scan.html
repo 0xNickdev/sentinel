@@ -69,9 +69,17 @@ main{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
 .grid > *{min-width:0}
 @media (min-width:900px){.grid.two{grid-template-columns:1fr 1fr}.span2{grid-column:span 2}}
 
-/* hero */
-.hero{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:center}
-@media (min-width:900px){.hero{grid-template-columns:1fr auto}}
+/* hero: verdict art on the right, content on the left */
+.hero-card{position:relative;overflow:hidden;padding:0}
+.hero-art{height:170px;background-size:cover;background-position:82% 55%;background-repeat:no-repeat}
+.hero-body{position:relative;padding:22px}
+.hero{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+@media (min-width:900px){
+  .hero-card{min-height:440px}
+  .hero-art{position:absolute;inset:0;height:auto;background-position:right center}
+  .hero-art::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,rgba(255,255,255,.96) 0%,rgba(255,255,255,.88) 38%,rgba(255,255,255,0) 64%)}
+  .hero-body{padding:32px 34px;max-width:62%}
+}
 .tok{display:flex;gap:16px;align-items:center;min-width:0}
 .avatar{width:64px;height:64px;border-radius:18px;flex:none;background:radial-gradient(circle at 50% 30%,#5175ff 0%,#0e2ac5 60%,#020b40 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:24px;overflow:hidden}
 .avatar img{width:100%;height:100%;object-fit:cover}
@@ -88,7 +96,7 @@ a.chip:hover{text-decoration:none;border-color:#c9cfe2}
 .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
 .btn:hover{text-decoration:none}
 
-.scorebox{display:flex;align-items:center;gap:22px}
+.scorebox{display:flex;align-items:center;gap:22px;margin-top:4px}
 .ring{position:relative;width:148px;height:148px;flex:none}
 .ring svg{display:block}
 .ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
@@ -465,9 +473,10 @@ window.__SCAN__ = /*__SCAN__*/null;
     const avatar = d.image ? `<img src="${esc(d.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
     const initial = esc((d.symbol || d.name || '?').replace(/^\$/, '').slice(0, 1).toUpperCase());
     app.innerHTML = `
-      <section class="card">
-        <div class="hero">
-          <div>
+      <section class="card hero-card">
+        <div class="hero-art" role="img" aria-label="${v.label} verdict illustration" style="background-image:url('/report-bg/${VERDICT[d.verdict] ? d.verdict : 'warn'}${innerWidth < 900 ? '-m' : ''}.webp')"></div>
+        <div class="hero-body">
+          <div class="hero">
             <div class="tok">
               <div class="avatar">${initial}${avatar}</div>
               <div style="min-width:0">
@@ -475,28 +484,30 @@ window.__SCAN__ = /*__SCAN__*/null;
                 <h1>${esc(d.name ?? 'Unknown token')} <span class="sym">${d.symbol ? '$' + esc(d.symbol) : ''}</span></h1>
               </div>
             </div>
-            <div class="mintrow">
-              <button class="chip" id="copyMint" ${tipAttr(`Copy the contract address`)}>${esc(short(d.mint))} <span aria-hidden="true">⧉</span></button>
-              <a class="chip" href="https://solscan.io/token/${esc(d.mint)}" target="_blank" rel="noopener">Solscan ↗</a>
-              <a class="chip" href="https://dexscreener.com/solana/${esc(d.mint)}" target="_blank" rel="noopener">DexScreener ↗</a>
-              ${isPump ? `<a class="chip" href="https://pump.fun/coin/${esc(d.mint)}" target="_blank" rel="noopener">pump.fun ↗</a>` : ''}
+            <div class="scorebox">
+              ${ring(d.score, v.color)}
+              <div>
+                <div class="verdict ${d.verdict}">${v.icon}${v.label}</div>
+                <div class="vnote">${v.note}</div>
+              </div>
             </div>
-            <div class="meta"><span>${esc(d.rulesVersion)}</span><span>scanned ${new Date(d.scannedAt).toLocaleString()}</span><span>${d.durationMs} ms${d.cached ? ' · cached' : ''}</span></div>
-            <div class="actions">
-              <button class="btn primary" id="rescan">Rescan</button>
-              <button class="btn" id="share">Copy report link</button>
-            </div>
-          </div>
-          <div class="scorebox">
-            ${ring(d.score, v.color)}
             <div>
-              <div class="verdict ${d.verdict}">${v.icon}${v.label}</div>
-              <div class="vnote">${v.note}</div>
+              <div class="mintrow" style="margin-top:0">
+                <button class="chip" id="copyMint" ${tipAttr(`Copy the contract address`)}>${esc(short(d.mint))} <span aria-hidden="true">⧉</span></button>
+                <a class="chip" href="https://solscan.io/token/${esc(d.mint)}" target="_blank" rel="noopener">Solscan ↗</a>
+                <a class="chip" href="https://dexscreener.com/solana/${esc(d.mint)}" target="_blank" rel="noopener">DexScreener ↗</a>
+                ${isPump ? `<a class="chip" href="https://pump.fun/coin/${esc(d.mint)}" target="_blank" rel="noopener">pump.fun ↗</a>` : ''}
+              </div>
+              <div class="meta"><span>${esc(d.rulesVersion)}</span><span>scanned ${new Date(d.scannedAt).toLocaleString()}</span><span>${d.durationMs} ms${d.cached ? ' · cached' : ''}</span></div>
+              <div class="actions">
+                <button class="btn primary" id="rescan">Rescan</button>
+                <button class="btn" id="share">Copy report link</button>
+              </div>
             </div>
           </div>
+          ${d.criticalFlags.length ? `<div class="banner">${ICON.block}<div><b>${d.criticalFlags.length === 1 ? 'Critical flag' : `${d.criticalFlags.length} critical flags`}</b>${d.criticalFlags.map((f) => esc(f.message)).join('<br>')}</div></div>` : ''}
+          ${fresh ? `<div class="banner warn">${ICON.warn}<div><b>Fresh launch</b>${esc(fresh.message)}</div></div>` : ''}
         </div>
-        ${d.criticalFlags.length ? `<div class="banner">${ICON.block}<div><b>${d.criticalFlags.length === 1 ? 'Critical flag' : `${d.criticalFlags.length} critical flags`}</b>${d.criticalFlags.map((f) => esc(f.message)).join('<br>')}</div></div>` : ''}
-        ${fresh ? `<div class="banner warn">${ICON.warn}<div><b>Fresh launch</b>${esc(fresh.message)}</div></div>` : ''}
       </section>
 
       <div class="grid two">
