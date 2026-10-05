@@ -60,6 +60,7 @@ svg.i{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-widt
 #stage{position:fixed;inset:0;z-index:0;pointer-events:none}
 #stage canvas{display:block;width:100%;height:100%;pointer-events:none}
 
+[hidden]{display:none!important}
 /* ---------- header ---------- */
 header{position:fixed;top:0;left:0;right:0;z-index:30;height:80px;padding:0 24px;display:flex;align-items:center;justify-content:space-between;
   pointer-events:none;opacity:0;transform:translateY(-16px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
@@ -410,6 +411,9 @@ footer{position:relative;z-index:10;background:var(--n950);color:#fff;border-rad
           <button type="submit" id="caBtn">Check<span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span></button>
         </form>
         <div class="demo-note" id="demoNote">The buttons show example scenarios. Paste a CA to run a live check.</div>
+        <a class="pill-cta" id="deepLink" href="/scan" hidden style="margin-top:14px">Deep analysis
+          <span class="orb"><svg class="i" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+        </a>
       </div>
     </div>
   </section>
@@ -928,6 +932,7 @@ const paintVerdict = (label, color, rows, animate) => {
 };
 const renderScen = (i, animate) => { const s = SCEN[i]; paintVerdict(s.v, s.color, s.rows, animate); };
 document.querySelectorAll('#scen button').forEach(btn => btn.addEventListener('click', () => {
+  deepLink.hidden = true;
   document.querySelectorAll('#scen button').forEach(b => b.classList.toggle('on', b === btn));
   renderScen(+btn.dataset.s, true);
 }));
@@ -945,12 +950,13 @@ const caForm = document.getElementById('caForm');
 const caInput = document.getElementById('caInput');
 const caBtn = document.getElementById('caBtn');
 const demoCard = document.querySelector('.demo');
+const deepLink = document.getElementById('deepLink');
 caForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const mint = caInput.value.trim();
   if (!mint) return caInput.focus();
   document.querySelectorAll('#scen button').forEach(b => b.classList.remove('on'));
-  caBtn.disabled = true; demoCard.classList.add('loading');
+  caBtn.disabled = true; demoCard.classList.add('loading'); deepLink.hidden = true;
   demoNote.textContent = 'Checking the token on mainnet…';
   try {
     const res = await fetch(`${API_BASE}/api/scan/${encodeURIComponent(mint)}`);
@@ -967,6 +973,8 @@ caForm.addEventListener('submit', async (e) => {
     if (!ranked.length) rows.push(['Flags', 'none found']);
     paintVerdict(label, color, rows, true);
     demoNote.textContent = `Live mainnet data · ${data.rulesVersion} · ${data.durationMs} ms${data.cached ? ' (cached)' : ''} · ${data.disclaimer}`;
+    deepLink.href = `/scan/${encodeURIComponent(data.mint)}`;
+    deepLink.hidden = false;
   } catch (err) {
     const offline = err instanceof TypeError; // fetch() rejects with TypeError only on network failure
     paintVerdict(offline ? 'Offline' : 'Error', 'var(--n500)', [['Reason', offline ? 'the Sentinel service is not running' : err.message]], true);

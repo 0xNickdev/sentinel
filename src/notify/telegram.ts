@@ -171,6 +171,7 @@ export async function handleUpdate(update: Update, linkWallet: (ms: string, clus
     return send(
       chat,
       `${VERDICT[r.verdict]} · <b>${r.score}/100</b>\n${esc(r.name ?? 'Unknown')}${r.symbol ? ` · ${esc(r.symbol)}` : ''}\n<code>${r.mint}</code>\n\n${flags || 'No flags found.'}\n\n<i>${esc(r.disclaimer)}</i>`,
+      [{ text: 'Full report', url: `${PUBLIC_URL}/scan/${r.mint}` }],
     );
   } catch (e) {
     return send(chat, `Could not check that token: ${esc((e as Error).message)}`);

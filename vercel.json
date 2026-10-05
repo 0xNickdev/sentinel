@@ -5,6 +5,10 @@
   "outputDirectory": "public",
   "rewrites": [
     {
+      "source": "/scan/:mint",
+      "destination": "/api"
+    },
+    {
       "source": "/docs",
       "destination": "/docs.html"
     },
@@ -23,7 +27,8 @@
   ],
   "functions": {
     "api/index.mjs": {
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "public/scan.html"
     }
   }
 }

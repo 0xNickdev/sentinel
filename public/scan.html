@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!--META-->
+<title>Token report · Sentinel</title>
+<meta name="description" content="Deep risk analysis of a Solana token: creator, holders, launch, liquidity, market and authorities." />
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content="Sentinel" />
+<meta property="og:title" content="Token report · Sentinel" />
+<meta property="og:description" content="Deep risk analysis of a Solana token by Sentinel." />
+<meta property="og:image" content="https://www.santinelguard.online/og.png" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:site" content="@Sent1nelAgency" />
+<meta name="twitter:image" content="https://www.santinelguard.online/og.png" />
+<!--/META-->
+<link rel="icon" href="/favicon.ico" sizes="any" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+<meta name="theme-color" content="#0E2AC5" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=JetBrains+Mono:wght@400;500;700&family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --page:#f3f5fc; --surface:#ffffff; --surface-2:#f7f8fd;
+  --ink:#0a0a0a; --ink-2:#404040; --muted:#7a7c86; --hair:#e4e7f1; --track:#e9edf8;
+  --accent:#0E2AC5; --accent-soft:#e6eafc;
+  --ok:#0C9C88; --warn:#C98300; --bad:#E0334F;
+  --ok-soft:#e3f5f2; --warn-soft:#fbf1dd; --bad-soft:#fde7eb;
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100; --s-other:#cfd3df;
+  --up:#006300; --down:#d03b3b;
+  --font-display:"Space Grotesk",system-ui,sans-serif;
+  --font-mono:"JetBrains Mono",ui-monospace,monospace;
+  --font:"Raleway",system-ui,sans-serif;
+  --shadow:0 1px 2px rgba(14,42,197,.04),0 12px 32px -18px rgba(14,42,197,.18);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--page);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+button{font:inherit;cursor:pointer}
+.mono{font-family:var(--font-mono)}
+
+/* header */
+header{position:sticky;top:0;z-index:20;background:rgba(243,245,252,.86);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-bottom:1px solid var(--hair)}
+.hdr{max-width:1180px;margin:0 auto;height:64px;padding:0 20px;display:flex;align-items:center;gap:16px}
+.brand{display:flex;align-items:baseline;gap:10px;color:var(--ink);flex:none}
+.brand:hover{text-decoration:none}
+.brand b{font-family:var(--font-display);font-weight:700;font-size:15px;letter-spacing:.25em}
+.brand span{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.search{flex:1;max-width:460px;margin-left:auto;display:flex;gap:6px;padding:4px;border-radius:999px;background:var(--surface);border:1px solid var(--hair)}
+.search input{flex:1;min-width:0;border:0;outline:0;background:transparent;padding:6px 12px;font-family:var(--font-mono);font-size:12.5px;color:var(--ink)}
+.search button{border:0;border-radius:999px;background:var(--ink);color:#fff;padding:6px 14px;font-size:13px;font-weight:600}
+.nav{display:none;gap:18px;font-size:14px;font-weight:500}
+.nav a{color:var(--ink-2)}
+@media (min-width:860px){.nav{display:flex}}
+@media (max-width:640px){.hdr{height:auto;flex-wrap:wrap;padding:10px 16px;gap:10px}.search{order:3;flex-basis:100%;max-width:none;margin-left:0}main{padding:20px 16px 64px}.card{padding:18px;border-radius:18px}}
+
+main{max-width:1180px;margin:0 auto;padding:28px 20px 80px}
+.eyebrow{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.card{background:var(--surface);border:1px solid var(--hair);border-radius:20px;box-shadow:var(--shadow);padding:22px}
+.card h2{margin:0;font-size:16px;font-weight:700;letter-spacing:-.005em}
+.card .sub{margin:4px 0 0;color:var(--muted);font-size:13px}
+.card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:18px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;margin-top:16px}
+.grid > *{min-width:0}
+@media (min-width:900px){.grid.two{grid-template-columns:1fr 1fr}.span2{grid-column:span 2}}
+
+/* hero */
+.hero{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:center}
+@media (min-width:900px){.hero{grid-template-columns:1fr auto}}
+.tok{display:flex;gap:16px;align-items:center;min-width:0}
+.avatar{width:64px;height:64px;border-radius:18px;flex:none;background:radial-gradient(circle at 50% 30%,#5175ff 0%,#0e2ac5 60%,#020b40 100%);color:#fff;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:24px;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.tok h1{margin:0;font-size:clamp(26px,4vw,38px);font-weight:600;letter-spacing:-.02em;line-height:1.1;overflow-wrap:anywhere}
+.tok .sym{color:var(--muted);font-weight:500}
+.mintrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--hair);background:var(--surface-2);border-radius:999px;padding:4px 10px;font-family:var(--font-mono);font-size:11.5px;color:var(--ink-2)}
+button.chip:hover{border-color:#c9cfe2}
+a.chip{color:var(--ink-2)}
+a.chip:hover{text-decoration:none;border-color:#c9cfe2}
+.meta{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px 16px;color:var(--muted);font-family:var(--font-mono);font-size:11px;letter-spacing:.04em}
+.actions{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:9px 16px;font-size:13px;font-weight:600;border:1px solid var(--hair);background:var(--surface);color:var(--ink)}
+.btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+.btn:hover{text-decoration:none}
+
+.scorebox{display:flex;align-items:center;gap:22px}
+.ring{position:relative;width:148px;height:148px;flex:none}
+.ring svg{display:block}
+.ring .num{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.ring .num b{font-size:48px;font-weight:600;letter-spacing:-.03em;line-height:1}
+.ring .num span{font-family:var(--font-mono);font-size:10.5px;letter-spacing:.14em;color:var(--muted);margin-top:4px}
+.verdict{display:inline-flex;align-items:center;gap:8px;border-radius:999px;padding:7px 14px;font-weight:700;font-size:14px}
+.verdict svg{width:16px;height:16px}
+.verdict.allow{background:var(--ok-soft);color:#08705f}.verdict.warn{background:var(--warn-soft);color:#8a5a00}.verdict.block{background:var(--bad-soft);color:#b0213b}
+.vnote{margin-top:10px;color:var(--ink-2);font-size:13.5px;max-width:30ch}
+
+.banner{margin-top:16px;border-radius:16px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;background:var(--bad-soft);border:1px solid #f7c6d0;color:#7d1426}
+.banner.warn{background:var(--warn-soft);border-color:#f1dcac;color:#6b4500}
+.banner svg{flex:none;width:18px;height:18px;margin-top:2px}
+.banner b{display:block}
+
+/* breakdown */
+.brow{display:grid;grid-template-columns:150px 1fr 70px;gap:14px;align-items:center;padding:11px 0;border-top:1px solid var(--hair)}
+.brow:first-child{border-top:0}
+.brow .lbl b{display:block;font-size:14px;font-weight:600}
+.brow .lbl span{font-size:12px;color:var(--muted)}
+.bar{position:relative;height:12px;border-radius:999px;background:var(--track);overflow:hidden}
+.bar i{position:absolute;left:0;top:0;bottom:0;border-radius:999px;background:var(--accent)}
+.brow .val{text-align:right;font-family:var(--font-mono);font-size:12.5px;font-variant-numeric:tabular-nums;color:var(--ink)}
+.brow .val small{color:var(--muted)}
+.status{display:inline-block;margin-left:6px;font-family:var(--font-mono);font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;padding:1px 6px;border-radius:6px;background:var(--surface-2);color:var(--muted);border:1px solid var(--hair);vertical-align:middle}
+.status.error{color:#8a5a00;background:var(--warn-soft);border-color:#f1dcac}
+@media (max-width:560px){.brow{grid-template-columns:1fr 64px}.brow .bar{grid-column:1 / -1;grid-row:2}}
+
+/* stacked supply bar */
+.stack{display:flex;gap:2px;height:22px;border-radius:8px;overflow:hidden;background:var(--surface)}
+.stack i{display:block;height:100%;min-width:2px}
+.legend{margin:16px 0 0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:8px 18px}
+.legend li{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-2)}
+.legend li b{margin-left:auto;font-family:var(--font-mono);font-size:12.5px;color:var(--ink);font-weight:500;font-variant-numeric:tabular-nums}
+.sw{width:10px;height:10px;border-radius:3px;flex:none}
+
+/* holders */
+.hrow{display:grid;grid-template-columns:22px minmax(0,150px) 1fr 52px;gap:10px;align-items:center;padding:6px 0}
+.hrow .rk{font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+.hrow .who{font-family:var(--font-mono);font-size:12px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hrow .hb{height:10px;border-radius:0 4px 4px 0;background:var(--s1);max-width:100%}
+.hrow .hb.creator{background:var(--s2)}
+.hrow .pc{text-align:right;font-family:var(--font-mono);font-size:12px;font-variant-numeric:tabular-nums}
+.tag{font-family:var(--font-mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border-radius:6px;padding:1px 5px;margin-left:6px;border:1px solid var(--hair);color:var(--ink-2);background:var(--surface-2)}
+.keyrow{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12px;color:var(--ink-2)}
+.keyrow span{display:inline-flex;align-items:center;gap:6px}
+
+/* stats */
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+@media (min-width:560px){.stats.three{grid-template-columns:repeat(3,minmax(0,1fr))}}
+.stat{border:1px solid var(--hair);border-radius:14px;padding:12px 14px;background:var(--surface-2);min-width:0}
+.stat .k{font-size:12px;color:var(--muted)}
+.stat .v{margin-top:2px;font-size:20px;font-weight:600;letter-spacing:-.01em;overflow-wrap:anywhere}
+.stat .d{font-size:11.5px;color:var(--muted);margin-top:2px}
+.up{color:var(--up)}.down{color:var(--down)}
+
+/* buy/sell split */
+.split{display:flex;gap:2px;height:14px;border-radius:6px;overflow:hidden;margin-top:14px}
+.split i{display:block;height:100%}
+
+/* meter */
+.meter{height:8px;border-radius:999px;background:var(--track);overflow:hidden;margin-top:8px}
+.meter i{display:block;height:100%;border-radius:999px}
+
+/* checklist */
+.checks{list-style:none;margin:0;padding:0}
+.checks li{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--hair);font-size:14px}
+.checks li:first-child{border-top:0}
+.checks svg{flex:none;width:18px;height:18px;margin-top:1px}
+.checks .t{flex:1}
+.checks .t span{display:block;font-size:12px;color:var(--muted)}
+
+/* flags */
+.flags{list-style:none;margin:0;padding:0}
+.flags li{display:flex;gap:12px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--hair)}
+.flags li:first-child{border-top:0}
+.sev{flex:none;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;border-radius:6px;padding:3px 7px;margin-top:1px;min-width:84px}
+.sev svg{width:12px;height:12px}
+.sev.critical{background:var(--bad-soft);color:#b0213b}.sev.warn{background:var(--warn-soft);color:#8a5a00}.sev.info{background:var(--surface-2);color:var(--muted);border:1px solid var(--hair)}
+.flags .m{font-size:14px}
+.flags .m span{display:block;font-family:var(--font-mono);font-size:11px;color:var(--muted)}
+
+/* clusters diagram */
+.diagram{width:100%;overflow-x:auto}
+.diagram svg{display:block;min-width:420px;max-width:640px}
+.empty{border:1px dashed #d6dbea;border-radius:14px;padding:22px;text-align:center;color:var(--muted);font-size:13.5px}
+
+/* snipers timeline */
+.tl svg{display:block;width:100%}
+
+/* tooltip */
+#tip{position:fixed;z-index:50;pointer-events:none;background:var(--ink);color:#fff;border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.45;max-width:280px;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;box-shadow:0 10px 30px -10px rgba(0,0,0,.4)}
+#tip.on{opacity:1;transform:none}
+#tip b{font-weight:700}
+#tip .mono{font-size:11px;color:#c9cdd8}
+
+/* states */
+.skeleton{height:14px;border-radius:8px;background:linear-gradient(90deg,#e9ecf6,#f5f7fc,#e9ecf6);background-size:200% 100%;animation:sh 1.2s infinite}
+@keyframes sh{to{background-position:-200% 0}}
+.err{text-align:center;padding:60px 20px}
+.err h1{font-size:28px;font-weight:600;margin:10px 0}
+.err p{color:var(--ink-2);max-width:52ch;margin:0 auto}
+.foot{margin-top:28px;color:var(--muted);font-size:12px;text-align:center;font-family:var(--font-mono);letter-spacing:.04em}
+.foot a{color:var(--muted);text-decoration:underline}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="hdr">
+    <a class="brand" href="/"><b>SENTINEL</b><span>Report</span></a>
+    <form class="search" id="search" autocomplete="off">
+      <input id="q" spellcheck="false" placeholder="Paste a Solana token CA…" aria-label="Token address" />
+      <button type="submit">Analyze</button>
+    </form>
+    <nav class="nav"><a href="/docs#scoring">Rules</a><a href="/docs">Docs</a></nav>
+  </div>
+</header>
+
+<main id="app">
+  <div class="card"><div class="skeleton" style="width:40%"></div><div class="skeleton" style="width:70%;margin-top:14px"></div><div class="skeleton" style="width:55%;margin-top:14px"></div></div>
+</main>
+<div id="tip" role="tooltip"></div>
+
+<script>
+window.__SCAN__ = /*__SCAN__*/null;
+</script>
+<script>
+(() => {
+  const app = document.getElementById('app');
+  const tip = document.getElementById('tip');
+  const MINT_RE = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+
+  // Everything from the scan (names, metadata, addresses) is untrusted: always escaped.
+  const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+  const short = (a) => (a && a.length > 12 ? `${a.slice(0, 4)}…${a.slice(-4)}` : a ?? '');
+  const pct = (n, d = 1) => (n == null || Number.isNaN(n) ? 'n/a' : `${Number(n).toFixed(d)}%`);
+  const usd = (n) => (n == null ? 'n/a' : n >= 1e6 ? `$${(n / 1e6).toFixed(2)}M` : n >= 1e3 ? `$${(n / 1e3).toFixed(1)}K` : `$${Math.round(n)}`);
+  const num = (n) => (n == null ? 'n/a' : Number(n).toLocaleString('en-US'));
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  const ICON = {
+    ok: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>',
+    warn: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 9v4M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>',
+    block: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="m5.6 5.6 12.8 12.8"/></svg>',
+    info: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 16v-4M12 8h.01"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>',
+  };
+  const VERDICT = {
+    allow: { label: 'Allow', icon: ICON.ok, color: 'var(--ok)', note: 'No serious risks found. Scores are risk indicators, not advice.' },
+    warn: { label: 'Caution', icon: ICON.warn, color: 'var(--warn)', note: 'Some risk signals. Size positions with care.' },
+    block: { label: 'Block', icon: ICON.block, color: 'var(--bad)', note: 'High risk. Sentinel blocks agents from buying this token.' },
+  };
+  const SEV = { critical: ['Critical', ICON.block], warn: ['Risk', ICON.warn], info: ['Info', ICON.info] };
+  const BLOCK_NOTE = {
+    creator: 'Launch history and dev behaviour',
+    holders: 'Concentration and linked wallets',
+    launch: 'Bundles and snipers at launch',
+    rights: 'Mint, freeze and metadata rights',
+    liquidity: 'Depth and lock',
+    market: 'Sell test and trading activity',
+    metadata: 'Impersonation and links',
+  };
+
+  /* ---------- tooltip: any element with data-tip ----------
+     Tip HTML stays in this array and the attribute holds only its index: an attribute would
+     un-escape the untrusted parts on read. */
+  const TIPS = [];
+  const tipAttr = (html) => `data-tip="${TIPS.push(html) - 1}"`;
+  const showTip = (e) => {
+    const t = e.target.closest('[data-tip]');
+    if (!t) return tip.classList.remove('on');
+    tip.innerHTML = TIPS[+t.getAttribute('data-tip')] ?? '';
+    const r = tip.getBoundingClientRect();
+    const x = clamp(e.clientX + 14, 8, innerWidth - r.width - 8);
+    const y = e.clientY + 18 + r.height > innerHeight ? e.clientY - r.height - 12 : e.clientY + 18;
+    tip.style.left = `${x}px`; tip.style.top = `${y}px`;
+    tip.classList.add('on');
+  };
+  document.addEventListener('pointermove', showTip);
+  document.addEventListener('pointerdown', showTip);
+  document.addEventListener('scroll', () => tip.classList.remove('on'), { passive: true });
+
+  /* ---------- pieces ---------- */
+  const ring = (score, color) => {
+    const r = 62, c = 2 * Math.PI * r, f = clamp(score, 0, 100) / 100;
+    return `<div class="ring" ${tipAttr(`<b>Score ${score} / 100</b><br>Sum of the seven blocks below`)}>
+      <svg width="148" height="148" viewBox="0 0 148 148" aria-hidden="true">
+        <circle cx="74" cy="74" r="${r}" fill="none" stroke="var(--track)" stroke-width="10"/>
+        <circle cx="74" cy="74" r="${r}" fill="none" stroke="${color}" stroke-width="10" stroke-linecap="round"
+          stroke-dasharray="${(c * f).toFixed(1)} ${c.toFixed(1)}" transform="rotate(-90 74 74)"/>
+      </svg>
+      <div class="num"><b>${score}</b><span>/ 100</span></div></div>`;
+  };
+
+  const block = (d, id) => d.blocks.find((b) => b.id === id);
+  const statusTag = (b) => (b && b.status !== 'ok' ? `<span class="status ${b.status}">${b.status === 'error' ? 'no data' : 'partial'}</span>` : '');
+  const unavailable = (b) => b && b.status === 'error';
+  const noData = (b, what) => `<div class="empty">${esc(what)}: data source unavailable during this scan (${esc(b.details?.error ?? 'unknown')}). Scored at half weight.</div>`;
+
+  function breakdown(d) {
+    return d.blocks.map((b) => {
+      const w = (b.score / b.weight) * 100;
+      const flags = b.flags.map((f) => `• ${esc(f.message)}`).join('<br>') || 'No flags';
+      return `<div class="brow" ${tipAttr(`<b>${esc(b.label)}: ${b.score} / ${b.weight}</b><br>${flags}`)}>
+        <div class="lbl"><b>${esc(b.label)}${statusTag(b)}</b><span>${BLOCK_NOTE[b.id] ?? ''}</span></div>
+        <div class="bar" aria-hidden="true"><i style="width:${w.toFixed(1)}%"></i></div>
+        <div class="val">${b.score}<small> / ${b.weight}</small></div></div>`;
+    }).join('');
+  }
+
+  function supply(h) {
+    const parts = [
+      ['Top 10 wallets', h.top10Pct, 'var(--s1)'],
+      ['Program vaults', h.programVaultPct, 'var(--s2)'],
+      ['Liquidity pool or curve', h.poolPct, 'var(--s3)'],
+      ['Burned', h.burnedPct, 'var(--s4)'],
+    ];
+    const known = parts.reduce((s, p) => s + (p[1] || 0), 0);
+    parts.push(['Everyone else', Math.max(0, 100 - known), 'var(--s-other)']);
+    const segs = parts.filter((p) => p[1] > 0.05).map(([l, v, c]) => `<i style="flex:${v};background:${c}" ${tipAttr(`<b>${l}</b><br>${pct(v)} of supply`)}></i>`).join('');
+    const legend = parts.map(([l, v, c]) => `<li><span class="sw" style="background:${c}"></span>${l}<b>${pct(v)}</b></li>`).join('');
+    return `<div class="stack" role="img" aria-label="Supply distribution">${segs}</div><ul class="legend">${legend}</ul>`;
+  }
+
+  function holders(h) {
+    const list = h.topHolders || [];
+    if (!list.length) return '<div class="empty">No individual wallets among the largest holders: supply sits in the pool, curve or program vaults.</div>';
+    const clusterOf = new Map();
+    (h.fundingClusters || []).forEach((c, i) => c.wallets.forEach((w) => clusterOf.set(w, i + 1)));
+    const max = Math.max(...list.map((x) => x.pct), 1);
+    return list.map((x, i) => {
+      const cl = clusterOf.get(x.owner);
+      const tags = (x.isCreator ? '<span class="tag">creator</span>' : '') + (cl ? `<span class="tag">cluster ${cl}</span>` : '');
+      return `<div class="hrow" ${tipAttr(`<span class='mono'>${esc(x.owner)}</span><br><b>${pct(x.pct, 2)}</b> of supply${x.isCreator ? '<br>Token creator' : ''}${cl ? `<br>Funded from the same wallet as cluster ${cl}` : ''}`)}>
+        <span class="rk">${i + 1}</span>
+        <a class="who" href="https://solscan.io/account/${esc(x.owner)}" target="_blank" rel="noopener">${esc(short(x.owner))}</a>
+        <div><div class="hb ${x.isCreator ? 'creator' : ''}" style="width:${((x.pct / max) * 100).toFixed(1)}%"></div></div>
+        <span class="pc">${pct(x.pct)}${tags ? '' : ''}</span></div>${tags ? `<div style="margin:-4px 0 4px 32px">${tags}</div>` : ''}`;
+    }).join('') + `<div class="keyrow"><span><i class="sw" style="background:var(--s1)"></i>Wallet</span><span><i class="sw" style="background:var(--s2)"></i>Creator</span></div>`;
+  }
+
+  function clusters(h) {
+    const cs = h.fundingClusters || [];
+    if (!cs.length) return '<div class="empty">None of the largest holders were funded from a common wallet.</div>';
+    const rows = cs.reduce((n, c) => n + Math.max(c.wallets.length, 1), 0);
+    const rowH = 34, H = rows * rowH + (cs.length - 1) * 18 + 20, W = 640;
+    let y = 10, svg = '';
+    cs.forEach((c, i) => {
+      const n = c.wallets.length, top = y, mid = top + (n * rowH) / 2;
+      svg += `<g ${tipAttr(`<b>Cluster ${i + 1}</b><br>Funder <span class='mono'>${esc(c.funder)}</span><br>${n} wallets, ${pct(c.pct)} of supply`)}>
+        <rect x="8" y="${mid - 16}" width="190" height="32" rx="16" fill="var(--accent-soft)"/>
+        <text x="24" y="${mid + 4}" font-family="JetBrains Mono" font-size="11.5" fill="var(--ink)">funder ${esc(short(c.funder))}</text></g>`;
+      c.wallets.forEach((w, j) => {
+        const wy = top + j * rowH + rowH / 2;
+        svg += `<path d="M198 ${mid} C 300 ${mid}, 330 ${wy}, 420 ${wy}" fill="none" stroke="#b9c3ea" stroke-width="2"/>
+          <g ${tipAttr(`<span class='mono'>${esc(w)}</span><br>Funded by cluster ${i + 1}`)}>
+          <circle cx="426" cy="${wy}" r="5" fill="var(--s1)" stroke="var(--surface)" stroke-width="2"/>
+          <text x="440" y="${wy + 4}" font-family="JetBrains Mono" font-size="11.5" fill="var(--ink-2)">${esc(short(w))}</text></g>`;
+      });
+      svg += `<text x="${W - 8}" y="${mid + 4}" text-anchor="end" font-family="JetBrains Mono" font-size="12" font-weight="700" fill="var(--ink)">${pct(c.pct)}</text>`;
+      y += n * rowH + 18;
+    });
+    return `<div class="diagram"><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Funding clusters">${svg}</svg></div>
+      <p class="sub" style="margin-top:10px">Linked wallets hold ${pct(h.clusterPct)} of supply. One source funding several top holders usually means one team behind them.</p>`;
+  }
+
+  function launch(b) {
+    const L = b.details;
+    if (unavailable(b)) return noData(b, 'Launch');
+    if (!L.analyzed) return `<div class="empty">${esc(L.reason || 'Launch not analyzed')}. Older tokens with long histories skip this block.</div>`;
+    const sn = L.topSnipers || [];
+    const maxOff = Math.max(5, ...sn.map((s) => s.slotOffset));
+    // Drawn at the card's real width so the slot labels stay readable on phones.
+    const W = clamp(Math.round(app.clientWidth - 90), 280, 600), x0 = 20, x1 = W - 20, xs = (o) => x0 + (o / maxOff) * (x1 - x0);
+    const maxPct = Math.max(...sn.map((s) => s.pct), 1);
+    // Buyers in the same slot stack upward instead of drawing over each other.
+    const rad = (s) => 5 + (s.pct / maxPct) * 9;
+    const stackH = new Map();
+    sn.forEach((s) => stackH.set(s.slotOffset, (stackH.get(s.slotOffset) ?? 0) + 2 * rad(s) + 3));
+    const top = Math.max(40, ...stackH.values()) + 8;
+    const H = top + 30, base = top;
+    let tl = `<line x1="${x0}" x2="${x1}" y1="${base}" y2="${base}" stroke="var(--hair)" stroke-width="1"/>`;
+    for (let o = 0; o <= maxOff; o++) tl += `<line x1="${xs(o)}" x2="${xs(o)}" y1="${base - 4}" y2="${base + 4}" stroke="#cfd5e6"/><text x="${xs(o)}" y="${base + 20}" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">${o === 0 ? 'launch' : '+' + o}</text>`;
+    const acc = new Map();
+    [...sn].sort((a, b) => b.pct - a.pct).forEach((s) => {
+      const r = rad(s), used = acc.get(s.slotOffset) ?? 0;
+      acc.set(s.slotOffset, used + 2 * r + 3);
+      tl += `<g ${tipAttr(`<span class='mono'>${esc(s.wallet)}</span><br>Bought ${pct(s.pct, 2)} of supply<br>${s.slotOffset === 0 ? 'In the launch slot' : `${s.slotOffset} slot(s) after launch`}`)}>
+        <circle cx="${xs(s.slotOffset)}" cy="${base - 4 - used - r}" r="${r}" fill="var(--s2)" stroke="var(--surface)" stroke-width="2"/></g>`;
+    });
+    return `<div class="stats three">
+        <div class="stat"><div class="k">Sniper share</div><div class="v">${pct(L.sniperPct)}</div><div class="d">bought in the first slots</div></div>
+        <div class="stat"><div class="k">Same-slot buyers</div><div class="v">${num(L.sameSlotBuyers)}</div><div class="d">bundled with the launch</div></div>
+        <div class="stat"><div class="k">Dev bought at launch</div><div class="v">${pct(L.devBoughtPct)}</div><div class="d">of supply</div></div>
+      </div>
+      ${sn.length ? `<div class="tl" style="margin-top:16px"><svg viewBox="0 0 ${W} ${H}" style="max-width:${W}px" role="img" aria-label="Early buyers by slot">${tl}</svg><p class="sub">Each dot is an early buyer, sized by share, placed by slots after launch.</p></div>` : '<div class="empty" style="margin-top:14px">No snipers in the first slots.</div>'}`;
+  }
+
+  function market(b) {
+    const M = b.details;
+    if (unavailable(b)) return noData(b, 'Market');
+    const buys = M.buys24h ?? 0, sells = M.sells24h ?? 0, tot = buys + sells;
+    const ch = (v) => (v == null ? '<span>n/a</span>' : `<span class="${v > 0 ? 'up' : v < 0 ? 'down' : ''}">${v > 0 ? '▲' : v < 0 ? '▼' : ''} ${Math.abs(v).toFixed(2)}%</span>`);
+    const imp = M.sellTestPriceImpactPct;
+    const impColor = imp == null ? 'var(--muted)' : imp < 3 ? 'var(--ok)' : imp < 10 ? 'var(--warn)' : 'var(--bad)';
+    return `<div class="stats">
+        <div class="stat"><div class="k">Volume 24h</div><div class="v">${usd(M.volume24hUsd)}</div></div>
+        <div class="stat"><div class="k">Price 5m · 1h</div><div class="v" style="font-size:16px">${ch(M.priceChange5m)} · ${ch(M.priceChange1h)}</div></div>
+      </div>
+      <div class="split" role="img" aria-label="Buys versus sells">${tot ? `<i style="flex:${buys};background:var(--s1)" ${tipAttr(`<b>${num(buys)} buys</b> in 24h`)}></i><i style="flex:${sells};background:var(--s2)" ${tipAttr(`<b>${num(sells)} sells</b> in 24h`)}></i>` : '<i style="flex:1;background:var(--track)"></i>'}</div>
+      <div class="keyrow"><span><i class="sw" style="background:var(--s1)"></i>Buys ${num(buys)}</span><span><i class="sw" style="background:var(--s2)"></i>Sells ${num(sells)}</span></div>
+      <div style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;font-size:13px"><span>Sell test: price impact</span><b class="mono" style="font-weight:500">${M.sellable === false ? 'cannot sell' : pct(imp)}</b></div>
+        <div class="meter"><i style="width:${M.sellable === false ? 100 : clamp((imp ?? 0) * 5, 2, 100)}%;background:${M.sellable === false ? 'var(--bad)' : impColor}"></i></div>
+        <p class="sub">A small simulated sale through Jupiter. ${M.sellable === false ? 'No route to sell: honeypot.' : 'Lower is better.'}</p>
+      </div>`;
+  }
+
+  function liquidity(b) {
+    const Q = b.details;
+    if (unavailable(b)) return noData(b, 'Liquidity');
+    return `<div class="stats">
+      <div class="stat"><div class="k">Liquidity</div><div class="v">${usd(Q.liquidityUsd)}</div><div class="d">${esc(Q.venue ?? 'no venue')}</div></div>
+      <div class="stat"><div class="k">LP</div><div class="v" style="font-size:16px">${Q.lpLocked === true ? 'Locked' : Q.lpLocked === false ? 'Unlocked' : 'Not checked'}</div><div class="d">${Q.lpLocked === true ? 'cannot be pulled' : 'lock status'}</div></div>
+      ${Q.bondingCurveSol != null ? `<div class="stat"><div class="k">Bonding curve</div><div class="v">${Q.bondingCurveSol} SOL</div><div class="d">raised so far</div></div>` : ''}
+      ${Q.pairs != null ? `<div class="stat"><div class="k">Pools</div><div class="v">${num(Q.pairs)}</div></div>` : ''}
+    </div>`;
+  }
+
+  function creator(b) {
+    const C = b.details;
+    if (unavailable(b)) return noData(b, 'Creator');
+    if (!C.creator) return '<div class="empty">The creator could not be identified for this token.</div>';
+    return `<div class="stats three">
+      <div class="stat"><div class="k">Past launches</div><div class="v">${num(C.priorLaunches)}</div><div class="d">${C.priorLaunchesChecked ? `${C.priorLaunchesChecked} checked` : 'from this wallet'}</div></div>
+      <div class="stat"><div class="k">Dead launches</div><div class="v">${pct(C.priorDeadRatePct, 0)}</div><div class="d">of past launches</div></div>
+      <div class="stat"><div class="k">Dev holds now</div><div class="v">${pct(C.devHoldsNowPct)}</div><div class="d">${C.devSoldPct != null ? `sold ${pct(C.devSoldPct, 0)} of buy` : 'of supply'}</div></div>
+      <div class="stat"><div class="k">Wallet age</div><div class="v">${C.walletAgeDays == null ? 'n/a' : `${C.walletAgeDays} d`}</div></div>
+      <div class="stat"><div class="k">Wallet activity</div><div class="v">${esc(C.walletTxCount ?? 'n/a')}</div><div class="d">transactions</div></div>
+      <div class="stat"><div class="k">Creator</div><div class="v" style="font-size:14px"><a class="mono" href="https://solscan.io/account/${esc(C.creator)}" target="_blank" rel="noopener">${esc(short(C.creator))}</a></div></div>
+    </div>`;
+  }
+
+  function rights(d) {
+    const R = block(d, 'rights')?.details || {}, Mt = block(d, 'metadata')?.details || {};
+    const item = (ok, title, sub) => `<li><span style="color:${ok === null ? 'var(--muted)' : ok ? 'var(--ok)' : 'var(--bad)'}">${ok === null ? ICON.info : ok ? ICON.ok : ICON.x}</span><div class="t">${title}<span>${sub}</span></div></li>`;
+    const ext = (R.extensions || []).map((e) => e.extension ?? e).join(', ');
+    return `<ul class="checks">
+      ${item(R.mintAuthority === undefined ? null : !R.mintAuthority, 'Mint authority', R.mintAuthority ? `Active: ${esc(short(R.mintAuthority))} can mint more supply` : 'Revoked, supply is fixed')}
+      ${item(R.freezeAuthority === undefined ? null : !R.freezeAuthority, 'Freeze authority', R.freezeAuthority ? `Active: ${esc(short(R.freezeAuthority))} can freeze holders` : 'Revoked')}
+      ${item(R.metadataMutable === undefined ? null : !R.metadataMutable, 'Metadata', R.metadataMutable ? 'Mutable: name and image can change after you buy' : 'Immutable')}
+      ${item(ext ? null : true, 'Token program', `${esc(R.program ?? 'spl-token')}${ext ? `, extensions: ${esc(ext)}` : ', no extensions'}`)}
+      ${item(Mt.impersonates ? false : true, 'Identity', Mt.impersonates ? `Looks like ${esc(Mt.impersonates)}` : `${num(Mt.duplicateTickers ?? 0)} other tokens share this ticker`)}
+      ${item(Mt.socials?.length ? true : null, 'Links', Mt.socials?.length ? esc(Mt.socials.join(', ')) : 'No website or socials in metadata')}
+    </ul>`;
+  }
+
+  function flagsList(d) {
+    const order = ['critical', 'warn', 'info'];
+    const fs = [...d.flags].sort((a, b) => order.indexOf(a.severity) - order.indexOf(b.severity));
+    if (!fs.length) return '<div class="empty">No flags raised.</div>';
+    return `<ul class="flags">${fs.map((f) => { const [l, i] = SEV[f.severity] ?? SEV.info; return `<li><span class="sev ${f.severity}">${i}${l}</span><div class="m">${esc(f.message)}<span>${esc(f.id)}</span></div></li>`; }).join('')}</ul>`;
+  }
+
+  /* ---------- page ---------- */
+  function render(d) {
+    TIPS.length = 0;
+    const v = VERDICT[d.verdict] ?? VERDICT.warn;
+    const h = block(d, 'holders');
+    const isPump = d.mint.endsWith('pump');
+    const fresh = d.flags.find((f) => f.id === 'fresh_launch');
+    document.title = `${d.symbol ?? short(d.mint)} · score ${d.score} · Sentinel`;
+    const avatar = d.image ? `<img src="${esc(d.image)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : '';
+    const initial = esc((d.symbol || d.name || '?').replace(/^\$/, '').slice(0, 1).toUpperCase());
+    app.innerHTML = `
+      <section class="card">
+        <div class="hero">
+          <div>
+            <div class="tok">
+              <div class="avatar">${initial}${avatar}</div>
+              <div style="min-width:0">
+                <div class="eyebrow">Token report</div>
+                <h1>${esc(d.name ?? 'Unknown token')} <span class="sym">${d.symbol ? '$' + esc(d.symbol) : ''}</span></h1>
+              </div>
+            </div>
+            <div class="mintrow">
+              <button class="chip" id="copyMint" ${tipAttr(`Copy the contract address`)}>${esc(short(d.mint))} <span aria-hidden="true">⧉</span></button>
+              <a class="chip" href="https://solscan.io/token/${esc(d.mint)}" target="_blank" rel="noopener">Solscan ↗</a>
+              <a class="chip" href="https://dexscreener.com/solana/${esc(d.mint)}" target="_blank" rel="noopener">DexScreener ↗</a>
+              ${isPump ? `<a class="chip" href="https://pump.fun/coin/${esc(d.mint)}" target="_blank" rel="noopener">pump.fun ↗</a>` : ''}
+            </div>
+            <div class="meta"><span>${esc(d.rulesVersion)}</span><span>scanned ${new Date(d.scannedAt).toLocaleString()}</span><span>${d.durationMs} ms${d.cached ? ' · cached' : ''}</span></div>
+            <div class="actions">
+              <button class="btn primary" id="rescan">Rescan</button>
+              <button class="btn" id="share">Copy report link</button>
+            </div>
+          </div>
+          <div class="scorebox">
+            ${ring(d.score, v.color)}
+            <div>
+              <div class="verdict ${d.verdict}">${v.icon}${v.label}</div>
+              <div class="vnote">${v.note}</div>
+            </div>
+          </div>
+        </div>
+        ${d.criticalFlags.length ? `<div class="banner">${ICON.block}<div><b>${d.criticalFlags.length === 1 ? 'Critical flag' : `${d.criticalFlags.length} critical flags`}</b>${d.criticalFlags.map((f) => esc(f.message)).join('<br>')}</div></div>` : ''}
+        ${fresh ? `<div class="banner warn">${ICON.warn}<div><b>Fresh launch</b>${esc(fresh.message)}</div></div>` : ''}
+      </section>
+
+      <div class="grid two">
+        <section class="card span2">
+          <div class="card-head"><div><h2>Score breakdown</h2><p class="sub">Seven blocks, 100 points. Hover a row for its flags.</p></div><a class="eyebrow" href="/docs#scoring">How it is scored ↗</a></div>
+          ${breakdown(d)}
+        </section>
+
+        ${h ? `<section class="card">
+          <div class="card-head"><div><h2>Supply distribution</h2><p class="sub">Who holds the token. Pools, curves and vaults are not people.</p></div>${statusTag(h)}</div>
+          ${unavailable(h) ? noData(h, 'Holders') : supply(h.details)}
+        </section>
+        <section class="card">
+          <div class="card-head"><div><h2>Top holders</h2><p class="sub">Largest wallets, excluding pools and program vaults.</p></div></div>
+          ${unavailable(h) ? noData(h, 'Holders') : holders(h.details)}
+        </section>
+        <section class="card span2">
+          <div class="card-head"><div><h2>Funding clusters</h2><p class="sub">Top holders whose first SOL came from the same wallet.</p></div></div>
+          ${unavailable(h) ? noData(h, 'Holders') : clusters(h.details)}
+        </section>` : ''}
+
+        <section class="card"><div class="card-head"><div><h2>Launch</h2><p class="sub">The first blocks after the token was created.</p></div>${statusTag(block(d, 'launch'))}</div>${launch(block(d, 'launch'))}</section>
+        <section class="card"><div class="card-head"><div><h2>Market</h2><p class="sub">Activity and whether the token can be sold.</p></div>${statusTag(block(d, 'market'))}</div>${market(block(d, 'market'))}</section>
+        <section class="card"><div class="card-head"><div><h2>Liquidity</h2><p class="sub">Where it trades and whether the pool can be pulled.</p></div>${statusTag(block(d, 'liquidity'))}</div>${liquidity(block(d, 'liquidity'))}</section>
+        <section class="card"><div class="card-head"><div><h2>Creator</h2><p class="sub">The wallet that launched the token.</p></div>${statusTag(block(d, 'creator'))}</div>${creator(block(d, 'creator'))}</section>
+        <section class="card"><div class="card-head"><div><h2>Authorities and metadata</h2><p class="sub">Rights that could hurt holders after they buy.</p></div></div>${rights(d)}</section>
+        <section class="card"><div class="card-head"><div><h2>All flags</h2><p class="sub">${d.flags.length} raised, most severe first.</p></div></div>${flagsList(d)}</section>
+      </div>
+      <p class="foot">${esc(d.disclaimer)} · Rules are open: <a href="/docs#scoring">scoring</a> · <a href="https://github.com/0xNickdev/sentinel">source</a></p>`;
+
+    document.getElementById('copyMint').onclick = (e) => { navigator.clipboard?.writeText(d.mint); e.currentTarget.firstChild.textContent = 'Copied '; };
+    document.getElementById('share').onclick = (e) => { navigator.clipboard?.writeText(location.href); e.currentTarget.textContent = 'Link copied'; };
+    document.getElementById('rescan').onclick = () => load(d.mint, true);
+  }
+
+  function renderError(mint, message) {
+    document.title = 'Token report · Sentinel';
+    app.innerHTML = `<div class="card err"><div class="eyebrow">Token report</div><h1>${mint ? 'Could not analyze this token' : 'Analyze a Solana token'}</h1>
+      <p>${mint ? esc(message) : 'Paste a token contract address above to get a full risk report: creator, holders, launch, liquidity, market and authorities.'}</p>
+      ${mint ? `<p class="mono" style="margin-top:12px;font-size:12px;color:var(--muted)">${esc(mint)}</p><div class="actions" style="justify-content:center"><button class="btn primary" id="retry">Try again</button></div>` : ''}</div>`;
+    const r = document.getElementById('retry'); if (r) r.onclick = () => load(mint, true);
+  }
+
+  async function load(mint, fresh) {
+    if (!mint) return renderError(null);
+    if (!MINT_RE.test(mint)) return renderError(mint, 'That does not look like a Solana token address.');
+    if (!fresh && window.__SCAN__ && window.__SCAN__.mint === mint) return render(window.__SCAN__);
+    app.innerHTML = `<div class="card"><div class="eyebrow">Analyzing ${esc(short(mint))} on mainnet…</div><div class="skeleton" style="width:60%;margin-top:16px"></div><div class="skeleton" style="width:85%;margin-top:12px"></div><div class="skeleton" style="width:45%;margin-top:12px"></div></div>`;
+    try {
+      const res = await fetch(`/api/scan/${encodeURIComponent(mint)}`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+      render(data);
+    } catch (e) {
+      renderError(mint, e.message);
+    }
+  }
+
+  const fromPath = () => decodeURIComponent((location.pathname.match(/\/scan\/([^/?#]+)/) || [])[1] || new URLSearchParams(location.search).get('mint') || '');
+  document.getElementById('search').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const m = document.getElementById('q').value.trim();
+    if (!m) return;
+    history.pushState(null, '', `/scan/${encodeURIComponent(m)}`);
+    load(m, false);
+  });
+  addEventListener('popstate', () => load(fromPath(), false));
+  load(fromPath(), false);
+})();
+</script>
+</body>
+</html>

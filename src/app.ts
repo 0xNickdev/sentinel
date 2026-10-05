@@ -1,6 +1,8 @@
 import cors from '@fastify/cors';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import Fastify, { type FastifyReply, type FastifyRequest } from 'fastify';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
 import { BASTION_RULES_VERSION, checkTransaction } from './bastion/index.js';
 import { DEFAULT_POLICY, PolicyError, resolvePolicy } from './bastion/policy.js';
 import { decodeTransaction, TxInputError } from './bastion/simulate.js';
@@ -17,7 +19,7 @@ import { chatsFor, dbEnabled, rateLimitHit, usageRecord } from './lib/db.js';
 import { enterUsage, setUsageTool, type UsageContext } from './lib/usage.js';
 import { createMcpServer } from './mcp/server.js';
 import { RULES_VERSION, scanToken } from './scan/index.js';
-import { ScanInputError } from './scan/types.js';
+import { ScanInputError, type ScanResult } from './scan/types.js';
 
 /** Per-IP budget for endpoints that spend Helius credits. Shared across instances via Postgres. */
 const RATE_LIMIT = { windowMs: 60_000, max: 30 };
@@ -29,6 +31,42 @@ async function rateLimited(req: FastifyRequest, reply: FastifyReply): Promise<bo
   if (!wait) return false;
   reply.code(429).header('retry-after', wait).send({ error: 'Too many requests, try again in a minute' });
   return true;
+}
+
+const PUBLIC_URL = process.env.PUBLIC_URL ?? 'https://www.santinelguard.online';
+/** Shipped next to the function (vercel.json includeFiles); read once per container. */
+let reportPage: Promise<string> | undefined;
+const loadReportPage = () => (reportPage ??= readFile(join(process.cwd(), 'public', 'scan.html'), 'utf8'));
+const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
+/** JSON inside a <script>: no way to close the tag or break the line from the data. */
+const scriptJson = (v: unknown) => JSON.stringify(v).replace(/</g, '\\u003c').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029');
+
+function reportMeta(mint: string, scan: ScanResult | null) {
+  const url = `${PUBLIC_URL}/scan/${mint}`;
+  const verdict = scan ? { allow: 'Allow', warn: 'Caution', block: 'Block' }[scan.verdict] : null;
+  const name = scan ? `${scan.name ?? 'Unknown token'}${scan.symbol ? ` ($${scan.symbol})` : ''}` : 'Token report';
+  const title = scan ? `${name} · Sentinel score ${scan.score}/100 · ${verdict}` : 'Token report · Sentinel';
+  const lead = scan ? (scan.criticalFlags[0]?.message ?? scan.flags.find((f) => f.severity === 'warn')?.message ?? 'No serious risk flags.') : '';
+  const description = scan
+    ? `${lead.replace(/[.!]?$/, '.')} Holders, launch, liquidity, market and authorities, scored by Sentinel.`
+    : 'Deep risk analysis of a Solana token: creator, holders, launch, liquidity, market and authorities.';
+  const t = escapeHtml(title), d = escapeHtml(description);
+  return [
+    `<title>${t}</title>`,
+    `<meta name="description" content="${d}" />`,
+    `<link rel="canonical" href="${escapeHtml(url)}" />`,
+    '<meta property="og:type" content="website" />',
+    '<meta property="og:site_name" content="Sentinel" />',
+    `<meta property="og:url" content="${escapeHtml(url)}" />`,
+    `<meta property="og:title" content="${t}" />`,
+    `<meta property="og:description" content="${d}" />`,
+    `<meta property="og:image" content="${PUBLIC_URL}/og.png" />`,
+    '<meta name="twitter:card" content="summary_large_image" />',
+    '<meta name="twitter:site" content="@Sent1nelAgency" />',
+    `<meta name="twitter:title" content="${t}" />`,
+    `<meta name="twitter:description" content="${d}" />`,
+    `<meta name="twitter:image" content="${PUBLIC_URL}/og.png" />`,
+  ].join('\n');
 }
 
 function sendError(req: FastifyRequest, reply: FastifyReply, e: unknown) {
@@ -73,6 +111,25 @@ export async function buildApp() {
     rules: { scan: RULES_VERSION, bastion: BASTION_RULES_VERSION },
   }));
   app.get('/api/policy/default', async () => DEFAULT_POLICY);
+
+  // Report page: the scan is embedded so the page renders at once and link previews show the score.
+  app.get<{ Params: { mint: string } }>('/scan/:mint', async (req, reply) => {
+    const mint = req.params.mint.trim();
+    let html: string;
+    try {
+      html = await loadReportPage();
+    } catch {
+      return reply.redirect(`/scan.html?mint=${encodeURIComponent(mint)}`);
+    }
+    const ip = String(req.headers['x-forwarded-for'] ?? req.ip).split(',')[0].trim();
+    const limited = await rateLimitHit(ip, RATE_LIMIT.max, RATE_LIMIT.windowMs).catch(() => 0);
+    const scan = limited ? null : await withCluster('mainnet', () => scanToken(mint)).catch(() => null);
+    const head = html.slice(0, html.indexOf('<!--META-->')) + reportMeta(mint, scan) + html.slice(html.indexOf('<!--/META-->') + '<!--/META-->'.length);
+    return reply
+      .header('content-type', 'text/html; charset=utf-8')
+      .header('cache-control', 'public, max-age=0, s-maxage=60')
+      .send(head.replace('/*__SCAN__*/null', scriptJson(scan)));
+  });
 
   app.get<{ Params: { mint: string } }>('/api/scan/:mint', async (req, reply) => {
     if (await rateLimited(req, reply)) return;

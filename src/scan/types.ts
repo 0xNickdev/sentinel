@@ -25,6 +25,8 @@ export interface ScanResult {
   mint: string;
   name: string | null;
   symbol: string | null;
+  /** Token image from its metadata, when it has one. Untrusted URL. */
+  image: string | null;
   score: number;
   verdict: Verdict;
   risk: 'low' | 'medium' | 'high';

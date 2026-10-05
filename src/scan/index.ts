@@ -89,6 +89,7 @@ async function runScan(mint: string): Promise<ScanResult> {
     mint,
     name: asset?.content?.metadata?.name ?? null,
     symbol: asset?.content?.metadata?.symbol ?? null,
+    image: safeImage(asset?.content?.links?.image),
     score,
     verdict,
     risk: criticalFlags.length || score < MIN_TOKEN_SCORE ? 'high' : score < 75 ? 'medium' : 'low',
@@ -129,11 +130,15 @@ async function guarded(p: Promise<BlockResult>, id: BlockId, label: string, weig
   }
 }
 
+/** Only plain https links: the URL ends up in an <img src> on the report page. */
+const safeImage = (url: unknown) => (typeof url === 'string' && /^https:\/\/[^\s"'<>]+$/.test(url) && url.length < 500 ? url : null);
+
 function trustedResult(mint: string, started: number): ScanResult {
   return {
     mint,
     name: TRUSTED_MINTS[mint],
     symbol: TRUSTED_MINTS[mint],
+    image: null,
     score: 100,
     verdict: 'allow',
     risk: 'low',
