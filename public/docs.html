@@ -297,7 +297,7 @@ footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font
     </table></div>
 
     <h2 id="scoring">Scoring rules</h2>
-    <p>Seven blocks add up to 100. A block whose data source fails gets half its weight and <code>status: "error"</code>, so one outage cannot pass or sink a token on its own.</p>
+    <p>Seven blocks add up to 100. A block whose data source fails gets half its weight and <code>status: "error"</code>. If blocks worth 30 points or more fail and there is no critical flag, the scan returns <code>503</code> instead of a verdict: a score built mostly on missing data would say more about the outage than the token.</p>
     <div class="tbl"><table>
       <tr><th>Block</th><th>Weight</th><th>What it looks at</th></tr>
       <tr><td>Creator</td><td>20</td><td>Past launches, dead-token rate, dev dump, wallet age</td></tr>
@@ -367,7 +367,7 @@ footer{border-top:1px solid var(--n200);padding:28px 20px;text-align:center;font
       <tr><td><code>422</code></td><td>The address is not a token mint, or no route fits a guarded transaction</td></tr>
       <tr><td><code>429</code></td><td>Rate limit. Wait for <code>retry-after</code> seconds.</td></tr>
       <tr><td><code>502</code></td><td>An upstream source (RPC, Jupiter) failed. Safe to retry.</td></tr>
-      <tr><td><code>503</code></td><td>The service is missing configuration</td></tr>
+      <tr><td><code>503</code></td><td>Not enough data to score the token right now (a data source is down or rate limited), or the service is missing configuration. Retry later; never treat it as a verdict.</td></tr>
     </table></div>
     <div class="callout"><p><b>Fail closed.</b> Treat any error or timeout as "do not sign". The SDK does this for you: it throws and signs nothing. A guarded wallet cannot move funds without Sentinel's vote at all, while the owner keeps every permission.</p></div>
     <ul>

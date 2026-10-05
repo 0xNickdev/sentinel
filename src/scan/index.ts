@@ -17,6 +17,8 @@ export const RULES_VERSION = 'scan-v1.1';
 /** Below this score Scan recommends a block (policy default `min_token_score`). */
 export const MIN_TOKEN_SCORE = 60;
 const BLOCK_TIMEOUT_MS = 12_000;
+/** With this much weight missing the score says more about the outage than the token, so there is no verdict. */
+const MAX_MISSING_WEIGHT = 30;
 const DISCLAIMER = 'The score is a risk indicator, not financial advice.';
 
 const BLOCKS: Array<[BlockId, string, number, (ctx: ScanContext) => Promise<BlockResult>]> = [
@@ -75,6 +77,10 @@ async function runScan(mint: string): Promise<ScanResult> {
   const flags = blocks.flatMap((b) => b.flags);
   const criticalFlags = flags.filter((f) => f.severity === 'critical');
   const score = Math.round(blocks.reduce((s, b) => s + b.score, 0));
+  const missing = blocks.filter((b) => b.status === 'error').reduce((s, b) => s + b.weight, 0);
+  // A proven critical flag is enough to block; anything softer needs the data. Not cached, so the next call retries.
+  if (!criticalFlags.length && missing >= MAX_MISSING_WEIGHT)
+    throw new ScanInputError('Not enough data to score this token right now, try again shortly', 503);
   const verdict = criticalFlags.length || score < MIN_TOKEN_SCORE ? 'block' : score < 75 ? 'warn' : 'allow';
 
   return {
