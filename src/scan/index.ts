@@ -13,7 +13,7 @@ import { rightsBlock } from './blocks/rights.js';
 import { ScanContext } from './context.js';
 import { ScanInputError, type BlockId, type BlockResult, type ScanResult } from './types.js';
 
-export const RULES_VERSION = 'scan-v1.1';
+export const RULES_VERSION = 'scan-v1.2';
 /** Below this score Scan recommends a block (policy default `min_token_score`). */
 export const MIN_TOKEN_SCORE = 60;
 const BLOCK_TIMEOUT_MS = 12_000;
@@ -81,7 +81,9 @@ async function runScan(mint: string): Promise<ScanResult> {
   // A proven critical flag is enough to block; anything softer needs the data. Not cached, so the next call retries.
   if (!criticalFlags.length && missing >= MAX_MISSING_WEIGHT)
     throw new ScanInputError('Not enough data to score this token right now, try again shortly', 503);
-  const verdict = criticalFlags.length || score < MIN_TOKEN_SCORE ? 'block' : score < 75 ? 'warn' : 'allow';
+  const raw = criticalFlags.length || score < MIN_TOKEN_SCORE ? 'block' : score < 75 ? 'warn' : 'allow';
+  // Minutes-old launches have no history to clear them, so they never get a plain allow.
+  const verdict = raw === 'allow' && flags.some((f) => f.id === 'fresh_launch') ? 'warn' : raw;
 
   return {
     mint,

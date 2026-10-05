@@ -3,6 +3,11 @@ import type { ScanContext } from '../context.js';
 import { BlockBuilder, lin, round1 } from './util.js';
 
 /** Venues where LP cannot be pulled: pump.fun curve is program-held, PumpSwap migration burns LP. */
+/**
+ * A curve this young with no SOL in it has simply not been bought yet: the curve itself still quotes both ways.
+ * Older than this and still empty, nobody is buying, which is how dead launches look.
+ */
+const FRESH_CURVE_SECONDS = 3600;
 const LOCKED_VENUES = new Set(['pumpfun', 'pumpswap']);
 
 export const mainPair = (pairs: DexPair[]) =>
@@ -12,6 +17,7 @@ export const mainPair = (pairs: DexPair[]) =>
 export async function liquidityBlock(ctx: ScanContext) {
   const b = new BlockBuilder('liquidity', 'Liquidity', 15);
   const [curve, pairs] = await Promise.all([ctx.bondingCurve(), ctx.dexPairs()]);
+  let curveAgeSec: number | null = null;
 
   let liqUsd: number;
   let venue: string;
@@ -22,6 +28,8 @@ export async function liquidityBlock(ctx: ScanContext) {
     venue = 'pump.fun bonding curve';
     locked = true;
     b.details.bondingCurveSol = round1(curve.realSolReserves);
+    const launch = await ctx.launch().catch(() => null);
+    if (launch?.creationTime) curveAgeSec = Date.now() / 1000 - launch.creationTime;
   } else if (pairs.length) {
     const main = mainPair(pairs);
     liqUsd = pairs.reduce((s, p) => s + (p.liquidity?.usd ?? 0), 0);
@@ -47,7 +55,11 @@ export async function liquidityBlock(ctx: ScanContext) {
     b.flag('lp_lock_unknown', 'info', `LP lock on ${venue} is not checked in v1`);
   }
   const liqLabel = `~$${Math.round(liqUsd).toLocaleString('en-US')}`;
-  if (liqUsd < 500) {
+  const freshCurve = curveAgeSec !== null && curveAgeSec < FRESH_CURVE_SECONDS;
+  if (liqUsd < 500 && freshCurve) {
+    b.score = 0;
+    b.flag('fresh_launch', 'warn', `Launched ${Math.max(1, Math.round(curveAgeSec! / 60))} min ago on the pump.fun curve: too early to judge, treat as high risk`);
+  } else if (liqUsd < 500) {
     b.score = 0;
     b.flag('no_real_liquidity', 'critical', `Almost no liquidity (${liqLabel}), no trade possible without heavy losses`);
   } else if (liqUsd < 5_000) b.flag('low_liquidity', 'warn', `Liquidity is only ${liqLabel}`);
